@@ -24,6 +24,7 @@
     <ProjectGuid>{c022bacc-87f6-4bfe-a4cc-cd2e0023119a}</ProjectGuid>
     <RootNamespace>glfwproject</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>src</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -151,7 +152,6 @@
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="glad.c" />
-    <ClCompile Include="rasterizerFragment.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -171,9 +171,8 @@
   <ItemGroup>
     <None Include="fbfragment.glsl" />
     <None Include="fbvertex.glsl" />
-    <None Include="rasterizerVertex.glsl" />
-    <None Include="rayMarchingFragment.glsl" />
-    <None Include="rayMarchingVertex.glsl" />
+    <None Include="rmfragment.glsl" />
+    <None Include="rmvertex.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

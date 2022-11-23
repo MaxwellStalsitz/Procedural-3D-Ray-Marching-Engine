@@ -22,24 +22,12 @@ double xpo, ypo;
 glm::vec3 direction;
 
 float fixedDeltaTime;
-double fdt;
 
-bool jump = false;
-float jumpHeight = 12.5f;
-
-bool useLighting = true;
-
-//
 bool paused = false;
-//
+bool inEditor = false;
 
-float walkSpeed = 0.3f;
-float runSpeed = 0.45f;
-
-float movementMultiplier = 1.0f;
-
-int arrayIndex = 1;
-float timerCurrent;
+// ------------------------------------------------------------------------
+bool useLighting = true;
 
 int MAX_STEPS = 256;
 float MAX_DIST = 500.0;
@@ -53,39 +41,42 @@ int occlusionSamples = 8;
 float power = 3;
 int iterations = 8;
 
-bool sceneEditor = false;
-
-bool start = false;
-
-int selectedItem = 1;
-
 bool animate = true;
 float timeMultiplier = 1.0f;
 
+bool reflections = false;
+// ------------------------------------------------------------------------
+bool start = false;
+
+bool sceneEditor = false;
+int selectedItem = 1;
+
 int currentScene = 0;
 int scene = 1;
+// ------------------------------------------------------------------------
+float walkSpeed = 0.3f;
+float runSpeed = 0.45f;
+float movementMultiplier = 1.0f;
+
+bool jump = false;
+float jumpHeight = 12.5f;
 
 glm::vec3 lastDesiredPos;
 
+float smoothing = 10.0f;
 float runSmoothing = 15.0f;
 
 float velocityY = 0.0f;
 const float gravity = -50.f;
-
-float smoothing = 10.0f;
-
-bool inEditor = false;
-
-int node_clicked = -1;
-
+// ------------------------------------------------------------------------
 int numberOfEntities = 0;
-
-bool reflections = false;
+int node_clicked = -1;
 
 glm::vec3 editorPosition = glm::vec3(0.0f);
 glm::vec3 editorRotation = glm::vec3(0.0f);
 glm::vec3 editorScale = glm::vec3(0.0f);
 
+//sceneObject class, for rendering custmo objects on the fly
 class sceneObject {
     public:
         std::string name;
@@ -96,6 +87,7 @@ class sceneObject {
 };
 
 sceneObject sceneArray[25];
+// ------------------------------------------------------------------------
 
 float vertices[] = {
      1.f,  1.f, 0.0f,   1.0f, 1.0f,

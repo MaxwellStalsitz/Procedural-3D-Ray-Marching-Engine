@@ -48,9 +48,6 @@
     <ClCompile Include="..\imgui\imgui_demo.cpp">
       <Filter>Source Files\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="rasterizerFragment.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Source.h">
@@ -91,19 +88,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="rayMarchingVertex.glsl">
+    <None Include="rmvertex.glsl">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="rayMarchingFragment.glsl">
+    <None Include="rmfragment.glsl">
       <Filter>Source Files</Filter>
     </None>
     <None Include="fbvertex.glsl">
       <Filter>Source Files</Filter>
     </None>
     <None Include="fbfragment.glsl">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="rasterizerVertex.glsl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

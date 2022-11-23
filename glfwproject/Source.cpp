@@ -101,7 +101,7 @@ int WinMain()
     }
 
     //shader setup
-    Shader rayMarchingShader("rayMarchingVertex.glsl", "rayMarchingFragment.glsl");
+    Shader rayMarchingShader("rmvertex.glsl", "rmfragment.glsl");
     Shader frameBufferShader("fbvertex.glsl", "fbfragment.glsl");
 
     //setting the windows icon
@@ -139,6 +139,8 @@ int WinMain()
     ImFont* font1 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 24.0f, NULL);
     ImFont* font2 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 12.0f, NULL);
 
+    // ------------------------------------------------------------------------
+
     auto& colors = ImGui::GetStyle().Colors;
     colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.1f, 0.1f, 1.0f};
 
@@ -166,7 +168,7 @@ int WinMain()
 
     colors[ImGuiCol_PlotLines] = ImVec4(1.f, 1.f, 1.f, 1.0f);
 
-    //
+    // ------------------------------------------------------------------------
 
     ImGuiStyle& style = ImGui::GetStyle();
 
@@ -179,7 +181,7 @@ int WinMain()
     style.ItemSpacing = ImVec2(15.0, 4.0);
     style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
     
-    //
+    // ------------------------------------------------------------------------
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
@@ -273,6 +275,7 @@ int WinMain()
         //getting mouse position
         glfwGetCursorPos(window, &xpo, &ypo);
 
+        // ------------------------------------------------------------------------
         //setting up rayMarchingShader and sending data to uniform variables
         rayMarchingShader.use();
         rayMarchingShader.setVec2("resolution", glm::vec2(screenWidth * 1.2857, screenHeight));
@@ -304,6 +307,7 @@ int WinMain()
         rayMarchingShader.setInt("numberOfObjects", numberOfEntities);
 
         rayMarchingShader.setBool("reflections", reflections);
+        // ------------------------------------------------------------------------
         
         const char* name;
 
@@ -314,8 +318,6 @@ int WinMain()
             std::string str = ss.str();
 			name = str.c_str();
 
-            //glUniform3f(glGetUniformLocation(rayMarchingShader.ID, name),
-                //sceneArray[i].position.x, sceneArray[i].position.y, sceneArray[i].position.z);
             rayMarchingShader.setVec3(name, sceneArray[i].position);
         }
 
@@ -331,12 +333,14 @@ int WinMain()
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, renderedTexture);
 
+        // ------------------------------------------------------------------------
         ImGuiWindowFlags window_flags_transparent = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus;
         ImGuiWindowFlags window_flags_adjustable = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoFocusOnAppearing;
         ImGuiWindowFlags window_flags_parameters = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
         ImGuiWindowFlags window_flags_child = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus;
 		ImGuiWindowFlags window_flags_editor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
 		ImGuiWindowFlags window_flags_entityEditor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+        // ------------------------------------------------------------------------
 
         //getting framerate
         float frameRate = ImGui::GetIO().Framerate;
@@ -452,7 +456,7 @@ int WinMain()
                         //formatting and setting up imgui inputs for key variables
 
                         ImGui::SliderInt("Max Steps", &MAX_STEPS, 1, 1000);
-                        //ImGui::SliderFloat("Max Distance", &MAX_DIST, 0, 2500);
+                        ImGui::SliderFloat("Max Distance", &MAX_DIST, 0, 2500);
                         ImGui::SliderFloat("Min Distance", &MIN_DIST, 0, 5);
                         ImGui::Text("");
                         ImGui::Checkbox("Anti-Aliasing (SSAA 4X)", &antiAliasing);
@@ -558,6 +562,8 @@ int WinMain()
                             ImGui::InputFloat3("Rotation", &editorRotation.x);
                             ImGui::InputFloat3("Scale", &editorScale.x);
 
+                            // ------------------------------------------------------------------------
+                            //imgui color picker for material
                             static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
                             static ImVec4 backup_color;
 
@@ -586,7 +592,7 @@ int WinMain()
                                 ImGui::ColorPicker4("##picker", (float*)&color, window_flags_editor | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
                                 ImGui::SameLine();
 
-                                ImGui::BeginGroup(); // Lock X position
+                                ImGui::BeginGroup();
                                 ImGui::Text("Current");
                                 ImGui::ColorButton("##current", color, ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(60, 40));
                                 ImGui::Text("Previous");
@@ -602,10 +608,8 @@ int WinMain()
 
                                     ImGuiColorEditFlags palette_button_flags = ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip;
                                     if (ImGui::ColorButton("##palette", saved_palette[n], palette_button_flags, ImVec2(20, 20)))
-                                        color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w); // Preserve alpha!
+                                        color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w);
 
-                                    // Allow user to drop colors into each palette entry. Note that ColorButton() is already a
-                                    // drag source by default, unless specifying the ImGuiColorEditFlags_NoDragDrop flag.
                                     if (ImGui::BeginDragDropTarget())
                                     {
                                         if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
@@ -620,6 +624,7 @@ int WinMain()
                                 ImGui::EndGroup();
                                 ImGui::EndPopup();
                             }
+                            // ------------------------------------------------------------------------
 
                             ImGui::Text("Material Color");
                             ImGui::Text("");
@@ -652,6 +657,7 @@ int WinMain()
                     ImGui::EndTabBar();
                 }
 
+                // ------------------------------------------------------------------------
                 //creating a graph to display frame rate over time
 
                 ImGui::Indent(64.0f);
@@ -729,6 +735,8 @@ int WinMain()
                         ImGui::EndChild();
                     }
                 }
+                // ------------------------------------------------------------------------
+
 
                 ImGui::PushFont(font2);
                 ImGui::Text("");
@@ -905,9 +913,6 @@ void processInput(GLFWwindow* window)
             velocityY = 0.0f;
         }
     }
-
-    
-
 }
 
 //window refresh

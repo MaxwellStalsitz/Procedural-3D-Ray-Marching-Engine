@@ -34,6 +34,8 @@ uniform int samples;
 
 uniform bool reflections;
 
+//----------------------------------------------------------------------
+
 vec2 mergeResults(vec2 res1, vec2 res2) 
 {
     return (res1.x < res2.x) ? res1 : res2;
@@ -43,6 +45,9 @@ vec2 differenceInResults(vec2 res1, vec2 res2)
 {
 	return (res1.x > -res2.x) ? res1 : vec2(-res2.x, res2.y);
 }
+
+//----------------------------------------------------------------------
+//distance functions
 
 float sdBox( vec3 p, vec3 b )
 {
@@ -54,6 +59,21 @@ float sdSphere(vec3 p, float s)
 {
   return length(p)-s;
 }
+
+float sdRoundBox( vec3 p, vec3 b, float r )
+{
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
+}
+
+float sdTorus( vec3 p, vec2 t )
+{
+  vec2 q = vec2(length(p.xz)-t.x,p.y);
+  return length(q)-t.y;
+}
+
+//----------------------------------------------------------------------
+//map functions
 
 vec2 customScene(vec3 rayPosition){
 	float distanceToSDF;
@@ -86,7 +106,6 @@ vec2 customScene(vec3 rayPosition){
 vec2 demoScene(vec3 rayPosition)
 {
 	float distanceToSDF;
-	//(the distance to a sphere is found by finding the distance from a point to the center of a sphere, then subtracting the radius)
 
 	float ID = 1.0;
 	vec3 position = vec3(-1,0,-5);
@@ -150,6 +169,7 @@ vec2 mandelbulb(vec3 pos)
 	return vec2((0.5*log(r)*r/dr), 1.0);
 }
 
+//choosing map function based on scene
 vec2 map(vec3 rayPosition)
 {
 	vec2 result;
@@ -164,6 +184,9 @@ vec2 map(vec3 rayPosition)
 	return result;
 }
 
+//----------------------------------------------------------------------
+
+//getting material from material id
 vec3 getMaterial(vec3 p, float id) 
 {
     vec3 m;
@@ -181,6 +204,7 @@ vec3 getMaterial(vec3 p, float id)
     return m;
 }
 
+//calculating ambient occlusion
 float getOcclusion(vec3 pos, vec3 normal)
 {
 	float occ = 0.0;
@@ -194,6 +218,7 @@ float getOcclusion(vec3 pos, vec3 normal)
 	return 1.0 - clamp(0.6 * occ, 0.0, 1.0);
 }
 
+//camera function
 mat3 getCam(vec3 rayOrigin)
 {
 	vec3 camR = normalize(cross(vec3(0,1,0),cameraFront));
@@ -201,6 +226,7 @@ mat3 getCam(vec3 rayOrigin)
 	return mat3(-camR, camU, cameraFront);
 }
 
+//calculating normals
 vec3 calcNormal(vec3 position)
 {
 	vec2 e = vec2(1.0, -1.0) * 0.0005;
@@ -211,6 +237,7 @@ vec3 calcNormal(vec3 position)
 		e.xxx * map(position + e.xxx).x);
 }
 
+//soft shadow function
 float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k )
 {
     float res = 1.0;
@@ -231,13 +258,13 @@ float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k )
     return res;
 }
 
-vec3 fogColor = vec3(0.3, 0.36, 0.6);
-
+//calculating uv
 vec2 getUV(vec2 offset){
 	return ((gl_FragCoord.xy + offset) - 0.5 * resolution.xy) / resolution.y;
 }
 
-vec2 traceRef(vec3 ro, vec3 rd){
+//second ray marching pass for calculating reflection values
+vec2 reflectionTrace(vec3 ro, vec3 rd){
     
     vec2 t = vec2(0), d;
     
@@ -254,22 +281,28 @@ vec2 traceRef(vec3 ro, vec3 rd){
     return t;
 }
 
-vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, float t, vec3 ro){
-	vec3 normal = calcNormal(rayOrigin);
+//color function, using phong lighting model and all other effects
+vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, float t){
+		vec3 normal = calcNormal(rayOrigin);
 		vec3 lightPosition = vec3(0,2,0);
 		vec3 light = normalize(lightPosition - rayOrigin);
 		vec3 H = reflect(-light, normal);
 		vec3 V = -rayDirection;
+		vec3 ld = lightPosition - rayOrigin;
+
+		float lDist = max(length(ld), MIN_DIST);
+
+		float atten = 1. / (lDist); //used to get rid of line artifacts from lighting with reflections
 
 		vec3 specularColor = vec3(0.5);
 		float specularPower = 32.0;
 		vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower);
-		vec3 material = getMaterial(ro, t);
+		vec3 material = getMaterial(rayOrigin, t);
 
 		float diffuse;
 		diffuse = clamp(dot(normal, normalize(lightPosition - rayOrigin)), 0.0, 1.0);
 		diffuse *= 5.0 / dot(light - rayOrigin, light - rayOrigin);
-		vec3 ambient = material * 0.05;
+		vec3 ambient = material * 0.5;
 
 		float fresnel = 0.25 * pow(1.0 + dot(rayDirection, normal), 3.0);
 
@@ -283,9 +316,14 @@ vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, float t, vec3 ro){
 		vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0);
 
 		float d = softshadow(rayOrigin + normal * 0.025, light, 0.01, MAX_STEPS, 14);
-
-		vec3 col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * d);
 		
+		float diff = max(dot(calcNormal(rayOrigin), ld), 0.);
+
+		fresnel *=  10;
+		diffuse *=  10;
+
+		vec3 col = material * ((back + ambient + (fresnel)) * occ + (vec3(pow(diffuse, 0.4545))+ (specular * occ)) * d) * atten;
+
 		return col;
 }
 
@@ -307,9 +345,9 @@ vec3 render(vec2 uv)
 		}
 	}
 
-	rayOrigin += rayDirection * t.x;
-
 	vec3 ro = rayOrigin;
+
+	rayOrigin += rayDirection * t.x;
 
 	vec3 sceneColor;
 	
@@ -317,16 +355,16 @@ vec3 render(vec2 uv)
 		if (useLighting){
 
 			//phong lighting (with gamma correction)
-			sceneColor = calcColor(rayOrigin, rayDirection, t.y, ro);
+			sceneColor = calcColor(rayOrigin, rayDirection, t.y);
 
 			if (reflections){
 				rayDirection = reflect(rayDirection, calcNormal(rayOrigin));
 
-				t = traceRef(rayOrigin + calcNormal(rayOrigin)*0.003, rayDirection);
+				t = reflectionTrace(rayOrigin + calcNormal(rayOrigin)*0.003, rayDirection);
 
 				rayOrigin += rayDirection * t.x;
 
-				sceneColor += calcColor(rayOrigin, rayDirection, t.y, ro)*0.5;
+				sceneColor += calcColor(rayOrigin, rayDirection, t.y)*0.5;
 
 			}
 		}
@@ -335,7 +373,11 @@ vec3 render(vec2 uv)
 		}
 	}
 	else{
-		sceneColor = background;
+
+		if (scene != 2)
+			sceneColor = background;
+		else
+			sceneColor = vec3(0.5f);
 	}
 	
 
@@ -346,6 +388,7 @@ void main()
 {
 	vec3 col;
 
+	//optional anti aliasing, using 4 samples per pixel
 	if (antiAliasing){
 		col += render(getUV(vec2(0.125, -0.375)));
 		col += render(getUV(vec2(-0.125, 0.375)));
