@@ -169,10 +169,10 @@
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="fbfragment.glsl" />
-    <None Include="fbvertex.glsl" />
     <None Include="rmfragment.glsl" />
     <None Include="rmvertex.glsl" />
+    <None Include="rtfragment.glsl" />
+    <None Include="rtvertex.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

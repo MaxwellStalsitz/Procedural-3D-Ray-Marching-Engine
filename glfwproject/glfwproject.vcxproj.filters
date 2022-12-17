@@ -94,10 +94,10 @@
     <None Include="rmfragment.glsl">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="fbvertex.glsl">
+    <None Include="rtvertex.glsl">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="fbfragment.glsl">
+    <None Include="rtfragment.glsl">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

@@ -11,6 +11,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+
+//boilerplate shader code, from https://learnopengl.com/
 class Shader
 {
 public:

@@ -30,6 +30,8 @@
 #include <glm/gtx/vector_angle.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <glm/ext.hpp>
 
 //source and shader header files, for setting up variables and shader class
 #include "Source.h"
@@ -68,7 +70,7 @@ float fov = 75.0f;
 
 int WinMain()
 {
-    //initializing glfw and setting the correct versions (modern opengl/core profile)
+    //boilerplate code, initializing glfw and setting the correct versions (modern opengl/core profile)
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -85,7 +87,7 @@ int WinMain()
         return -1;
     }
 
-    //setting up glfw and the input functions
+    //boilerplate code, setting up glfw and the input functions
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetKeyCallback(window, key_callback);
@@ -102,7 +104,7 @@ int WinMain()
 
     //shader setup
     Shader rayMarchingShader("rmvertex.glsl", "rmfragment.glsl");
-    Shader frameBufferShader("fbvertex.glsl", "fbfragment.glsl");
+    Shader rayTracingShader("rtvertex.glsl", "rtfragment.glsl");
 
     //setting the windows icon
     GLFWimage images[1];
@@ -113,7 +115,7 @@ int WinMain()
     //making sure loaded images are in the proper orientation (flipping them)
     stbi_set_flip_vertically_on_load(true);
 
-	//setting up the vertex buffer object, vertex array object, and element buffer object
+	//boilerplate code, setting up the vertex buffer object, vertex array object, and element buffer object
     unsigned int VBO, VAO, EBO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
@@ -185,44 +187,6 @@ int WinMain()
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
-	
-    //framebuffer, for rendering to imgui
-
-    GLuint FramebufferName = 0;
-    glGenFramebuffers(1, &FramebufferName);
-    glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
-
-    GLuint renderedTexture;
-    glGenTextures(1, &renderedTexture);
-
-    glBindTexture(GL_TEXTURE_2D, renderedTexture);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, screenWidth, screenHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    GLuint depthrenderbuffer;
-    glGenRenderbuffers(1, &depthrenderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, depthrenderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, screenWidth, screenHeight);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthrenderbuffer);
-
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderedTexture, 0);
-
-    GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
-    glDrawBuffers(1, DrawBuffers);
-
-    static const GLfloat g_quad_vertex_buffer_data[] = {
-        -1.0f, -1.0f, 0.0f,
-         1.0f, -1.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f,
-         1.0f, -1.0f, 0.0f,
-         1.0f,  1.0f, 0.0f,
-    };
 
     double limitFPS = 1.0 / 120.0;
 
@@ -234,6 +198,7 @@ int WinMain()
         //delta time setup
         float currentFrame = glfwGetTime();
 
+        //fixed delta time (because deltatime is not constant, meaning that it's not good for physics)
         fixedDeltaTime += (currentFrame - lastFrame) / limitFPS;
         deltaTime = currentFrame - lastFrame;
 		
@@ -251,16 +216,10 @@ int WinMain()
         direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
         direction.y = sin(glm::radians(pitch));
         direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-        
-        //input
-        glBindFramebuffer(GL_FRAMEBUFFER, FramebufferName);
-        glViewport(0, 0, screenWidth, screenHeight);
 
         //window refresh
         glClearColor(0.2588f, 0.5294f, 0.9607f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
-
-        ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
         //imgui refresh
         ImGui_ImplOpenGL3_NewFrame();
@@ -276,37 +235,60 @@ int WinMain()
         glfwGetCursorPos(window, &xpo, &ypo);
 
         // ------------------------------------------------------------------------
-        //setting up rayMarchingShader and sending data to uniform variables
-        rayMarchingShader.use();
-        rayMarchingShader.setVec2("resolution", glm::vec2(screenWidth * 1.2857, screenHeight));
-        rayMarchingShader.setFloat("time", glfwGetTime());
-        rayMarchingShader.setFloat("deltaTime", deltaTime);
-        rayMarchingShader.setVec2("mousePosition", glm::vec2(xpo, ypo));
-		
-        rayMarchingShader.setVec3("cameraPos", cameraPos);
-        rayMarchingShader.setVec3("direction", direction);
-        rayMarchingShader.setVec3("cameraFront", cameraFront);
-        rayMarchingShader.setBool("useLighting", useLighting);
-		
-        rayMarchingShader.setInt("MAX_STEPS", MAX_STEPS);
-        rayMarchingShader.setFloat("MAX_DIST", MAX_DIST);
-        rayMarchingShader.setFloat("MIN_DIST", MIN_DIST);
+        //setting up shader (ray marching or ray tracing) and sending data to uniform variables
 
-        rayMarchingShader.setBool("antiAliasing", antiAliasing);
+        if (rayMarching) {
+            rayMarchingShader.use();
+            rayMarchingShader.setVec2("resolution", glm::vec2(screenWidth * 1.2857, screenHeight));
+            rayMarchingShader.setFloat("time", glfwGetTime());
+            rayMarchingShader.setFloat("deltaTime", deltaTime);
+            rayMarchingShader.setVec2("mousePosition", glm::vec2(xpo, ypo));
 
-        rayMarchingShader.setInt("scene", scene);
+            rayMarchingShader.setVec3("cameraPos", cameraPos);
+            rayMarchingShader.setVec3("direction", direction);
+            rayMarchingShader.setVec3("cameraFront", cameraFront);
+            rayMarchingShader.setBool("useLighting", useLighting);
 
-        rayMarchingShader.setBool("ambientOcclusion", ambientOcclusion);
-        rayMarchingShader.setInt("samples", occlusionSamples);
+            rayMarchingShader.setInt("MAX_STEPS", MAX_STEPS);
+            rayMarchingShader.setFloat("MAX_DIST", MAX_DIST);
+            rayMarchingShader.setFloat("MIN_DIST", MIN_DIST);
 
-        rayMarchingShader.setFloat("power", power);
-        rayMarchingShader.setInt("iterations", iterations);
-        rayMarchingShader.setBool("animate", animate);
-        rayMarchingShader.setFloat("timeMultiplier", timeMultiplier);
+            rayMarchingShader.setBool("antiAliasing", antiAliasing);
 
-        rayMarchingShader.setInt("numberOfObjects", numberOfEntities);
+            rayMarchingShader.setInt("scene", scene);
 
-        rayMarchingShader.setBool("reflections", reflections);
+            rayMarchingShader.setBool("ambientOcclusion", ambientOcclusion);
+            rayMarchingShader.setInt("samples", occlusionSamples);
+
+            rayMarchingShader.setFloat("power", power);
+            rayMarchingShader.setInt("iterations", iterations);
+            rayMarchingShader.setBool("animate", animate);
+            rayMarchingShader.setFloat("timeMultiplier", timeMultiplier);
+
+            rayMarchingShader.setInt("numberOfObjects", numberOfEntities);
+
+            rayMarchingShader.setBool("reflections", reflections);
+            rayMarchingShader.setFloat("reflectionVisibility", reflectionVisibility);
+
+            rayMarchingShader.setBool("fogEnabled", fogEnabled);
+            rayMarchingShader.setFloat("fogVisibility", fogVisibility);
+        }
+		else {
+			rayTracingShader.use();
+            rayTracingShader.setVec2("resolution", glm::vec2(screenWidth, screenHeight));
+            rayTracingShader.setVec2("mouse", glm::vec2(xpo, ypo));
+            rayTracingShader.setBool("antiAliasing", antiAliasing);
+            rayTracingShader.setBool("ambientOcclusion", ambientOcclusion);
+            rayTracingShader.setVec3("cameraPos", cameraPos);
+            rayTracingShader.setFloat("time", glfwGetTime());
+            rayTracingShader.setVec3("direction", direction);
+            rayTracingShader.setVec3("cameraFront", cameraFront);
+            rayMarchingShader.setBool("fogEnabled", fogEnabled);
+            rayTracingShader.setFloat("fogVisibility", fogVisibility);
+
+            rayTracingShader.setBool("reflections", reflections);
+            rayTracingShader.setBool("useLighting", useLighting);
+		}
         // ------------------------------------------------------------------------
         
         const char* name;
@@ -322,16 +304,6 @@ int WinMain()
         }
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        //setting up framebuffer, and binding it to a texture to be rendered in the imgui window (also allows for post-processing effects)
-        frameBufferShader.use();
-
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, renderedTexture);
 
         // ------------------------------------------------------------------------
         ImGuiWindowFlags window_flags_transparent = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus;
@@ -356,6 +328,7 @@ int WinMain()
             ImGui::End();
         }
 
+        //custom resolutions based on imgui options
         if (selectedItem == 0) {
             screenWidth = 1280;
             screenHeight = 720;
@@ -368,6 +341,8 @@ int WinMain()
             screenWidth = 2560;
             screenHeight = 1440;
         }
+
+        // ------------------------------------------------------------------------
 
         float editorWidth = 400;
         float editorHeight = 500;
@@ -384,15 +359,6 @@ int WinMain()
 
         ImGui::SetNextWindowSize(ImVec2(editorWidth, editorHeight));
         ImGui::SetNextWindowPos(ImVec2((screenWidth - editorWidth) / 2, (screenHeight - editorHeight) / 2));
-
-        ImGui::SetNextWindowPos(ImVec2(0, 0));
-        ImGui::SetNextWindowSize(ImVec2(screenWidth, screenHeight));
-
-        if (ImGui::Begin("Scene", nullptr, window_flags_adjustable)) {
-            ImGui::Image((ImTextureID)renderedTexture, ImVec2(screenWidth, screenHeight), ImVec2(0, 1), ImVec2(1, 0));
-
-            ImGui::End();
-        }
 
         if (ImGui::BeginMainMenuBar()){
             if (ImGui::BeginMenu("File")){
@@ -421,7 +387,7 @@ int WinMain()
             }
 
             if (ImGui::BeginMenu("Scene")) {
-                static const char* scenes[]{ "Demo Scene", "Mandelbulb", "Scene Editor" };
+                static const char* scenes[]{ "Demo Scene", "Mandelbulb", "Scene Editor", "Cornell Box"};
                 ImGui::Combo("##foo", &currentScene, scenes, IM_ARRAYSIZE(scenes));
                 scene = currentScene + 1;
 
@@ -446,6 +412,7 @@ int WinMain()
                 
                 if (ImGui::BeginTabBar("Parameter Tabs")) {
                     if (ImGui::BeginTabItem(" Ray Marching ")) {
+                        rayMarching = true;
                         inEditor = false;
 
                         ImGui::Separator();
@@ -455,9 +422,14 @@ int WinMain()
 
                         //formatting and setting up imgui inputs for key variables
 
-                        ImGui::SliderInt("Max Steps", &MAX_STEPS, 1, 1000);
+                        ImGui::SliderInt("Steps", &MAX_STEPS, 1, 1000);
                         ImGui::SliderFloat("Max Distance", &MAX_DIST, 0, 2500);
-                        ImGui::SliderFloat("Min Distance", &MIN_DIST, 0, 5);
+                        ImGui::SliderFloat("Min Distance", &MIN_DIST, 0.001f, 0.25f);
+
+                        if (MIN_DIST == 0) {
+							MIN_DIST = 0.001f;
+						}
+
                         ImGui::Text("");
                         ImGui::Checkbox("Anti-Aliasing (SSAA 4X)", &antiAliasing);
                         ImGui::Text("");
@@ -468,12 +440,25 @@ int WinMain()
                             ImGui::Indent(32.0f);
                             if (ambientOcclusion)
                                 ImGui::SliderInt("Samples", &occlusionSamples, 1, 50);
-							ImGui::Unindent(64.0f);
+							ImGui::Unindent(32.0f);
                             ImGui::Checkbox("Reflections", &reflections);
-                            ImGui::Indent(64.0f);
+                            ImGui::Indent(32.0f);
+                            if (reflections)
+                                ImGui::SliderFloat("Reflection Visibility", &reflectionVisibility, 0, 1);
+                            ImGui::Unindent(64.0f);
                         }
                         else
-                            ImGui::Indent(32.0f);
+                            ImGui::Indent(-32.0f);
+							
+                        
+                        ImGui::Checkbox("Fog", &fogEnabled);
+                            if (fogEnabled) {
+								ImGui::Indent(32.0f);
+                                ImGui::SliderFloat("Fog Visibility", &fogVisibility, 0.0, 1.0);
+								ImGui::Unindent(32.0f);
+                            }
+                        ImGui::Indent(64.0f);
+                        //ImGui::Indent(64.0f);
 
                         if (scene == 2) {
                             ImGui::Indent(-64.0f);
@@ -500,14 +485,13 @@ int WinMain()
                     }
 
                     if (scene == 1) {
-                        if (ImGui::BeginTabItem(" Rasterization ")) {
-
+                        if (ImGui::BeginTabItem(" Ray Tracing ")) {
+                            
+                            rayMarching = false;
 
                             ImGui::EndTabItem();
                         }
                     }
-
-                    //int node_clicked;
 
                     if (scene == 3) {
                         if (ImGui::BeginTabItem(" Editor Settings ")){
@@ -563,7 +547,7 @@ int WinMain()
                             ImGui::InputFloat3("Scale", &editorScale.x);
 
                             // ------------------------------------------------------------------------
-                            //imgui color picker for material
+                            //imgui color picker for material, code from imgui demo scene
                             static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
                             static ImVec4 backup_color;
 
@@ -686,7 +670,7 @@ int WinMain()
 
                 ImGui::Indent(-64.0f);
 
-                if (scene != 3) {
+                if (1 == 1) {
                     ImGui::PushFont(font2);
                     ImGui::Text("");
                     ImGui::PopFont();
@@ -737,7 +721,6 @@ int WinMain()
                 }
                 // ------------------------------------------------------------------------
 
-
                 ImGui::PushFont(font2);
                 ImGui::Text("");
                 ImGui::PopFont();
@@ -751,7 +734,7 @@ int WinMain()
 
                     //reset to defaults button
                     if (ImGui::Button(resetText.c_str())) {
-                        MAX_STEPS = 256;
+                        MAX_STEPS = 325;
                         MAX_DIST = 500.0f;
                         MIN_DIST = 0.02;
                         antiAliasing = false;
@@ -762,14 +745,20 @@ int WinMain()
                         iterations = 8;
                         animate = true;
                         timeMultiplier = 1.0f;
+                        reflections = false;
+                        reflectionVisibility = 0.5f;
                     }
                     ImGui::Separator();
+
                 }
+
+                ImGui::Text("");
+                //ImGui::Text(glm::to_string(cameraPos).c_str());
+                //ImGui::Text(glm::to_string(direction).c_str());
 
                 ImGui::PopStyleVar();
                 ImGui::End();
             }
-            
         }
 
         if (ImGui::GetMouseCursor() == ImGuiMouseCursor_ResizeNWSE)
@@ -869,7 +858,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 //input (called every frame)
 void processInput(GLFWwindow* window) 
 {
-    if (!paused) {
+    if (!paused && scene != 4) {
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
             cameraSpeed = glm::mix(cameraSpeed, (runSpeed / 2) * movementMultiplier, runSmoothing / 10);
         }

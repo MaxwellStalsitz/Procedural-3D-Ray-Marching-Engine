@@ -15,6 +15,7 @@ const float FOV = 1.0;
 uniform int MAX_STEPS;
 uniform float MAX_DIST;
 uniform float MIN_DIST;
+
 uniform bool antiAliasing;
 
 uniform bool animate;
@@ -33,12 +34,27 @@ uniform bool ambientOcclusion;
 uniform int samples;
 
 uniform bool reflections;
+uniform float reflectionVisibility;
 
+uniform bool fogEnabled;
+uniform float fogVisibility;
+
+#define PI 3.1415926535897932384626433832795
+
+//----------------------------------------------------------------------
+vec3 background;
 //----------------------------------------------------------------------
 
 vec2 mergeResults(vec2 res1, vec2 res2) 
 {
     return (res1.x < res2.x) ? res1 : res2;
+}
+
+//from inigo quilez - https://iquilezles.org/articles/smin
+vec2 smoothMinimum(vec2 a, vec2 b, float k) {
+  float h = max(k - abs(a.x - b.x), 0.0) / k;
+  float id = (b.x < b.x) ? a.y : b.y;
+  return vec2(min(a.x, b.x) - h * h * h * k * 1.0 / 6.0, id);
 }
 
 vec2 differenceInResults(vec2 res1, vec2 res2)
@@ -47,12 +63,22 @@ vec2 differenceInResults(vec2 res1, vec2 res2)
 }
 
 //----------------------------------------------------------------------
-//distance functions
+//distance functions (from inigo quilez)
 
 float sdBox( vec3 p, vec3 b )
 {
   vec3 q = abs(p) - b;
   return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
+float sdBoxFrame( vec3 p, vec3 b, float e )
+{
+      p = abs(p  )-b;
+	  vec3 q = abs(p+e)-e;
+	  return min(min(
+      length(max(vec3(p.x,q.y,q.z),0.0))+min(max(p.x,max(q.y,q.z)),0.0),
+      length(max(vec3(q.x,p.y,q.z),0.0))+min(max(q.x,max(p.y,q.z)),0.0)),
+      length(max(vec3(q.x,q.y,p.z),0.0))+min(max(q.x,max(q.y,p.z)),0.0));
 }
 
 float sdSphere(vec3 p, float s)
@@ -70,6 +96,20 @@ float sdTorus( vec3 p, vec2 t )
 {
   vec2 q = vec2(length(p.xz)-t.x,p.y);
   return length(q)-t.y;
+}
+
+float sdOctahedron( vec3 p, float s)
+{
+  p = abs(p);
+  float m = p.x+p.y+p.z-s;
+  vec3 q;
+       if( 3.0*p.x < m ) q = p.xyz;
+  else if( 3.0*p.y < m ) q = p.yzx;
+  else if( 3.0*p.z < m ) q = p.zxy;
+  else return m*0.57735027;
+    
+  float k = clamp(0.5*(q.z-q.y+s),0.0,s); 
+  return length(vec3(q.x,q.y-s+k,q.z-k)); 
 }
 
 //----------------------------------------------------------------------
@@ -103,70 +143,162 @@ vec2 customScene(vec3 rayPosition){
 	return result;
 }
 
-vec2 demoScene(vec3 rayPosition)
+vec3 rotateX(vec3 p, float a) {
+    return vec3(p.x, cos(a) * p.y - sin(a) * p.z, sin(a) * p.y + cos(a) * p.z);
+}
+    
+vec3 rotateY(vec3 p, float a) {
+    return vec3(cos(a) * p.x + sin(a) * p.z, p.y, -sin(a) * p.x + cos(a) * p.z);
+}
+
+float sdHouse( vec3 p )
+{
+    vec3 q = abs(p) - vec3(1.0, 1.0, 0.5);
+    return min(max(q.x,max(q.y,q.z)),0.0) + length(max(q,0.0));
+}
+
+vec2 demoScene(vec3 pos)
 {
 	float distanceToSDF;
 
-	float ID = 1.0;
-	vec3 position = vec3(-1,0,-5);
-	float sphereRadius = 1;
-	distanceToSDF = sdSphere(rayPosition-position, sphereRadius);
+	float ID = 3.0;
+	//vec3 position = vec3(-.5,0,-6);
+	vec3 position = vec3(0,0,-3);
+	//distanceToSDF = sdTorus(rotateX(pos-position, 90.0 * PI / 180.0), vec2(0.75,0.15));
+	distanceToSDF = sdSphere(pos - position, 1);
 	vec2 sphere1 = vec2(distanceToSDF, ID);
 
-	ID = 3.0;
-	sphereRadius = 1;
+	ID = 5.0;
 	position = vec3(2, 0, -3);
-	distanceToSDF = sdSphere(rayPosition-position, sphereRadius);
+	distanceToSDF = sdOctahedron(pos-position, 1);
 	vec2 sphere2 = vec2(distanceToSDF, ID);
 
-	ID = 1.0;
-	sphereRadius = 1;
-	position = vec3(-2.5, -0.5, -2.5);
-	distanceToSDF = sdBox(rayPosition-position, vec3(0.5,0.5,0.5));
+	ID = 3.0;
+	position = vec3(-3.0, -0.25, -3.0);
+	distanceToSDF = sdBoxFrame(pos-position, vec3(0.75, 0.75, 0.75), 0.05);
 	vec2 box = vec2(distanceToSDF, ID);
-
+	
 	ID = 2.0;
-	float planeHeight = 1.0;
-	float planeDistance = rayPosition.y + planeHeight;
+	float planeDistance = pos.y + 1.0;
 	distanceToSDF = planeDistance;
 	vec2 plane = vec2(distanceToSDF, ID);
 
-	vec2 result = mergeResults(plane, sphere1);
-	result = mergeResults(result, sphere2);
+	vec2 result;
+	result = mergeResults(plane, sphere1);
+	//result = mergeResults(result, sphere2);
 	//result = mergeResults(result, box);
+
 	return result;
+}
+
+vec2 manyEntityScene(vec3 pos){
+	
+	vec2 result;
+
+	float ID, distanceToSDF;
+
+	ID = 2.0;
+	float planeHeight = 1.0;
+	float planeDistance = pos.y + planeHeight;
+	distanceToSDF = planeDistance;
+	vec2 plane = vec2(distanceToSDF, ID);
+	result = plane;
+
+	for (int i = 0; i < 100; i++){
+		
+		// make a 10x10 row of spheres
+		float x = float(i % 10) * 2.5;
+		float z = float(i / 10) * 2.5;
+		vec3 position = vec3(x, 0.0, z);
+
+		distanceToSDF = sdSphere(pos-position, 1);
+		vec2 sphere = vec2(distanceToSDF, 1.0);
+
+		result = mergeResults(result, sphere);
+	}
+
+	return result;
+}
+
+vec2 infiniteScene(vec3 pos){
+	pos = mod(pos, 4.0) - 4.0 * 0.5;
+
+	float id = 6.0;
+
+	vec2 sphere1 = vec2(length(pos) - 0.5, id);
+
+	return sphere1;
+}
+
+float plane( vec3 p, vec4 n ) {
+  return dot(p,n.xyz) + n.w;
+}
+
+#define BACK_WALL_SDF plane(pos, vec4(0.0, 0.0, -1.0, 6.0))
+#define FRONT_WALL_SDF plane(pos + vec3(0.0,0.0,25.0), vec4(0.0, 0.0, -1.0, 6.0))
+#define LEFT_WALL_SDF plane(pos, vec4(1.0, 0.0, 0.0, 4.0))
+#define RIGHT_WALL_SDF plane(pos, vec4(-1.0, 0.0, 0.0, 4.0))
+#define CEILING_SDF plane(pos, vec4(0.0, -1.0, 0.0, 5))
+#define FLOOR_SDF plane(pos, vec4(0.0, 1.0, 0.0, 2.0))
+#define TALL_BOX_SDF sdBox(rotateY(pos + vec3(-1.5, 0.0, -2.0), 65.0 * PI / 180.0), vec3(1.0, 2.0, 1.2))
+#define SMALL_BOX_SDF sdBox(rotateY(pos + vec3(1.5, 1.0, 0.0), -65.0 * PI / 180.0), vec3(1.0, 1.0, 1.0))
+
+vec2 cornellBox(vec3 pos){
+    vec2 t = vec2(BACK_WALL_SDF, 1.0);
+    
+    float t2;
+    if((t2 = LEFT_WALL_SDF) < t.x) {
+        t = vec2(t2, 4.0);
+    }
+    if((t2 = RIGHT_WALL_SDF) < t.x) {
+        t = vec2(t2, 3.0);
+    }
+    if((t2 = CEILING_SDF) < t.x) {
+        t = vec2(t2, 1.0);
+    }
+    if((t2 = FLOOR_SDF) < t.x) {
+        t = vec2(t2, 1.0);
+    }  
+
+	float tallBox = sdBox(rotateY(pos + vec3(-1.5, 0.0, -2.0), 65.0 * PI / 180.0), vec3(1.0, 2.0, 1.2));
+	vec2 tallSDF = vec2(tallBox, 1.0);
+	float smallBox = sdBox(rotateY(pos + vec3(1.5, 1.0, 0.0), -65.0 * PI / 180.0), vec3(1.0, 1.0, 1.0));
+	vec2 smallSDF = vec2(smallBox, 1.0);
+	
+	t = mergeResults(t, tallSDF);
+	t = mergeResults(t, smallSDF);
+
+	return t;
 }
 
 vec2 mandelbulb(vec3 pos) 
 {
 	vec3 z = pos;
+	vec3 dz=vec3(0.0);
+	float r, theta, phi;
 	float dr = 1.0;
-	float r = 0.0;
-	float theta, phi;
 	
-	for (int i = 0; i < iterations; i++) {
+	float t0 = 1.0;
+	for(int i = 0; i < iterations; ++i) {
 		r = length(z);
-		if (r > 2.0) break;
+		if(r > 2.0) continue;
+		theta = atan(z.y / z.x);
+        if (animate)
+			phi = asin(z.z / r) + time*timeMultiplier;
+        else
+			phi = asin(z.z / r);
 		
-		if (animate){
-			theta = acos(z.z/r)+ (time * timeMultiplier);
-			phi = atan(z.y,z.x) + (time * timeMultiplier);
-		}
-		else{
-			theta = acos(z.z/r);
-			phi = atan(z.y,z.x);
-		}
+		dr = pow(r, power - 1.0) * dr * power + 1.0;
+	
+		r = pow(r, power);
+		theta = theta * power;
+		phi = phi * power;
 		
-		dr =  pow(r, power-1.0) * power*dr + 1.0;
+		z = r * vec3(cos(theta)*cos(phi), sin(theta)*cos(phi), sin(phi)) + pos;
 		
-		float zr = pow(r, power);
-		theta *= power;
-		phi *= power;
-
-		z = zr*vec3(sin(theta)*cos(phi), sin(phi)*sin(theta), cos(theta));
-		z+=pos;
+		t0 = min(t0, r);
 	}
-	return vec2((0.5*log(r)*r/dr), 1.0);
+	return vec2(0.5 * log(r) * r / dr, 1.0);
 }
 
 //choosing map function based on scene
@@ -180,11 +312,15 @@ vec2 map(vec3 rayPosition)
 		result = mandelbulb(rayPosition);
 	else if (scene == 3)
 		result = customScene(rayPosition);
+	else if (scene == 4)
+		result = cornellBox(rayPosition);
 	
 	return result;
 }
 
 //----------------------------------------------------------------------
+
+int colorIteration = 0;
 
 //getting material from material id
 vec3 getMaterial(vec3 p, float id) 
@@ -192,14 +328,31 @@ vec3 getMaterial(vec3 p, float id)
     vec3 m;
 
 	if (id == 0.0)
-		//custom material
-		id = 0.0;
+		id = 0.0; //custom material
 	else if (id == 1.0)
 		m = vec3(1.0, 1.0, 1.0);
 	else if (id == 2.0)
-		m = vec3(0.2 + 0.4 * mod(floor(p.x) + floor(p.z), 2.0));
+		m = mix(vec3(0.0 + 1.0 * mod(floor(p.x) + floor(p.z), 2.0)), vec3(0.773, 0.725, 0.627), 0.5); //from inigo quilez
 	else if (id == 3.0)
-		m = vec3(1.0, 0.0, 0.0);
+		m = vec3(0.61, 0.176, 0.176);
+	else if (id == 4.0)
+		m = vec3(0.49, 0.74, 0.4);
+	else if (id == 5.0)
+		m = vec3(0.247, 0.427, 0.819);
+	else if (id == 6.0){ // random
+	vec3 ip = floor(p);
+
+
+	float rnd = fract(sin(dot(ip, vec3(27.17, 112.61, 57.53)))*43758.5453);
+    
+    // Color up the objects in a cubic checkered arrangement using a subtle version
+    // of IQ's palette formula.
+    m = (fract(dot(ip, vec3(.5))) > .001)? 
+         .5 + .45*cos(mix(3., 4., rnd) + vec3(.9, .45, 1.5)) //vec3(.6, .3, 1.)
+         : vec3(.7 + .3*rnd);
+    
+	}
+
 	
     return m;
 }
@@ -211,7 +364,7 @@ float getOcclusion(vec3 pos, vec3 normal)
 	float weight = 1.0;
 	for (int i = 0; i < samples; i++){
 		float len = 0.01 + 0.02 * float(i*i);
-		float dist = map(pos+normal*len).x;
+		float dist = map(pos+normal*len).x; //closest point in the scene
 		occ += (len-dist)*weight;
 		weight *= 0.85;
 	}
@@ -237,8 +390,8 @@ vec3 calcNormal(vec3 position)
 		e.xxx * map(position + e.xxx).x);
 }
 
-//soft shadow function
-float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k )
+//soft shadow function (https://iquilezles.org/articles/rmshadows/)
+float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k)
 {
     float res = 1.0;
 	float dist = mint;
@@ -263,123 +416,150 @@ vec2 getUV(vec2 offset){
 	return ((gl_FragCoord.xy + offset) - 0.5 * resolution.xy) / resolution.y;
 }
 
-//second ray marching pass for calculating reflection values
-vec2 reflectionTrace(vec3 ro, vec3 rd){
-    
-    vec2 t = vec2(0), d;
-    
-    for (int i = 0; i < MAX_STEPS; i++){
+//ray marching pass for calculating standard and reflection values
+vec2 rayMarch(vec3 ro, vec3 rd){
+    float t = 0.0; //total distance travelled
+	float id;
+	
+    for(int i = 0; i < MAX_STEPS; i++) {
+        vec3 pos = ro + t * rd; // hit point
+        vec2 m = map(pos);
+		
+        if(abs(m.x) < MIN_DIST){
+			id = m.y;
+            return vec2(t, id);
+		}
 
-        d = map(ro + rd* t.x);
-        
-        if(abs(d.x)<0.002 || t.x>MAX_DIST) break;
-        
-        t.x += d.x;
-		t.y = d.y;
+		if (abs(m.x) > MAX_DIST){
+			break;
+		}
+
+        t += m.x;
     }
-    
-    return t;
+
+	return vec2(-1.0, -1.0); // hit sky
 }
 
 //color function, using phong lighting model and all other effects
-vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, float t){
-		vec3 normal = calcNormal(rayOrigin);
-		vec3 lightPosition = vec3(0,2,0);
-		vec3 light = normalize(lightPosition - rayOrigin);
-		vec3 H = reflect(-light, normal);
-		vec3 V = -rayDirection;
-		vec3 ld = lightPosition - rayOrigin;
+vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t){
+	vec3 col;
+	
+	vec3 normal = calcNormal(rayOrigin);
+	vec3 lightPosition;
 
-		float lDist = max(length(ld), MIN_DIST);
+	if (scene != 4)
+		lightPosition = vec3(0,2,0);
+	else
+		lightPosition = vec3(0.5, 5.5, -5.0);
 
-		float atten = 1. / (lDist); //used to get rid of line artifacts from lighting with reflections
+	vec3 light = normalize(lightPosition - rayOrigin);
+	vec3 H = reflect(-light, normal);
+	vec3 V = -rayDirection;
 
-		vec3 specularColor = vec3(0.5);
-		float specularPower = 32.0;
-		vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower);
-		vec3 material = getMaterial(rayOrigin, t);
+	vec3 specularColor = vec3(0.5);
+	float specularPower = 10.0;
+	vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower);
+	vec3 material = getMaterial(rayOrigin, t.y);
 
-		float diffuse;
-		diffuse = clamp(dot(normal, normalize(lightPosition - rayOrigin)), 0.0, 1.0);
-		diffuse *= 5.0 / dot(light - rayOrigin, light - rayOrigin);
-		vec3 ambient = material * 0.5;
+	float diffuse;
+	diffuse = clamp(dot(normal, normalize(lightPosition - rayOrigin)), 0.0, 1.0);
+	diffuse *= 5.0 / dot(light - rayOrigin, light - rayOrigin);
+	vec3 ambient = material * 0.25;
 
-		float fresnel = 0.25 * pow(1.0 + dot(rayDirection, normal), 3.0);
+	float fresnel = 0.25 * pow(1.0 + dot(rayDirection, normal), 3.0);
 
-		float occ;
+	float occ;
 
-		if (ambientOcclusion)
-			occ = getOcclusion(rayOrigin, normal);
-		else
-			occ = 1;
+	if (ambientOcclusion)
+		occ = getOcclusion(rayOrigin, normal);
+	else
+		occ = 1;
 
-		vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0);
+	vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0);
 
-		float d = softshadow(rayOrigin + normal * 0.025, light, 0.01, MAX_STEPS, 14);
+	float d = softshadow(rayOrigin + normal * 0.025, light, 0.01, MAX_STEPS, 14);
 		
-		float diff = max(dot(calcNormal(rayOrigin), ld), 0.);
+	float diff = max(dot(calcNormal(rayOrigin), light), 0.);
 
-		fresnel *=  10;
-		diffuse *=  10;
+	col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * d);
 
-		vec3 col = material * ((back + ambient + (fresnel)) * occ + (vec3(pow(diffuse, 0.4545))+ (specular * occ)) * d) * atten;
+	if (fogEnabled){
+		float fog = smoothstep(4.0, 50.0, t.x) * fogVisibility;
+		col = mix(col, background, fog);
+	}
 
-		return col;
+	return col;
 }
 
 vec3 render(vec2 uv)
 {
-	vec3 rayOrigin = cameraPos;
-	vec3 background = vec3(0.39,0.58,0.93);
-	
-	//the direction of our ray, which is computer for every single pixel of the screen (which is also fragCoord.xy/the fragment COORDINATES (one for every pixel))
-	vec3 rayDirection = getCam(rayOrigin) * normalize(vec3(uv, FOV));
+	vec3 rayOrigin;
 
-	vec2 h,t;
-	for(int i = 0; i < MAX_STEPS; i++){
-		h = map(rayOrigin + t.x * rayDirection);
-		t.x += h.x;
-		t.y = h.y;
-		if(abs(h.x) < MIN_DIST || abs(h.x) > MAX_DIST){
-			break;
-		}
+	if (scene == 1 || scene == 3){
+		background = vec3(0.5,0.7,0.9);
+	}
+	else
+		background = vec3(1.0,1.0,1.0);
+
+	if (scene != 4)
+		rayOrigin = cameraPos;
+	else
+		rayOrigin = vec3(0.0, 2, -9);
+
+	//the direction of our ray, which is computed for every single pixel of the screen (which is also fragCoord.xy/the fragment COORDINATES (one for every pixel))
+	vec3 rayDirection;
+	
+	if (scene != 4)
+		rayDirection = getCam(rayOrigin) * normalize(vec3(uv, FOV));
+	else{
+		vec3 cu = vec3(0, 1, 0);
+		vec3 cv = vec3(0.0, 0.0, 1.0);
+		vec3 rov = normalize(cv-rayOrigin);
+		vec3 u =  normalize(cross(cu, rov));
+		vec3 v =  normalize(cross(rov, u));
+		rayDirection = normalize(rov + u*uv.x + v*uv.y);
 	}
 
-	vec3 ro = rayOrigin;
+	vec2 t;
+	t = rayMarch(rayOrigin, rayDirection);
 
 	rayOrigin += rayDirection * t.x;
 
 	vec3 sceneColor;
 	
-	if (h.x < MIN_DIST){
+	if (t.y != -1.0){
 		if (useLighting){
 
 			//phong lighting (with gamma correction)
-			sceneColor = calcColor(rayOrigin, rayDirection, t.y);
+			sceneColor = calcColor(rayOrigin, rayDirection, t);
 
 			if (reflections){
 				rayDirection = reflect(rayDirection, calcNormal(rayOrigin));
 
-				t = reflectionTrace(rayOrigin + calcNormal(rayOrigin)*0.003, rayDirection);
-
+				t = rayMarch(rayOrigin + rayDirection * MIN_DIST, rayDirection);
+				
 				rayOrigin += rayDirection * t.x;
 
-				sceneColor += calcColor(rayOrigin, rayDirection, t.y)*0.5;
-
+				if (rayOrigin.y > -0.99 && t.y == -1.0)
+					sceneColor += background * reflectionVisibility;
+				else{
+					sceneColor += calcColor(rayOrigin, rayDirection, t) * reflectionVisibility;
+				}
+					
 			}
 		}
 		else{
 			sceneColor = getMaterial(rayOrigin, t.y);
+
+			if (fogEnabled){
+				float fog = smoothstep(4.0, 50.0, t.x);
+				sceneColor = mix(sceneColor, background, fog);
+			}
 		}
 	}
 	else{
-
-		if (scene != 2)
-			sceneColor = background;
-		else
-			sceneColor = vec3(0.5f);
+		sceneColor += background;
 	}
-	
 
 	return sceneColor;
 }

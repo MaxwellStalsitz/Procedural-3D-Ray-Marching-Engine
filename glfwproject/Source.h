@@ -27,9 +27,11 @@ bool paused = false;
 bool inEditor = false;
 
 // ------------------------------------------------------------------------
+bool rayMarching = true;
+
 bool useLighting = true;
 
-int MAX_STEPS = 256;
+int MAX_STEPS = 325;
 float MAX_DIST = 500.0;
 float MIN_DIST = 0.02;
 
@@ -45,6 +47,10 @@ bool animate = true;
 float timeMultiplier = 1.0f;
 
 bool reflections = false;
+float reflectionVisibility = 0.5f;
+
+bool fogEnabled = true;
+float fogVisibility = 1.0f;
 // ------------------------------------------------------------------------
 bool start = false;
 
