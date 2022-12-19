@@ -45,7 +45,7 @@ uniform float fogVisibility;
 vec3 background;
 //----------------------------------------------------------------------
 
-vec2 mergeResults(vec2 res1, vec2 res2) 
+vec2 mergeResults(vec2 res1, vec2 res2) //determines if a something is between two objects
 {
     return (res1.x < res2.x) ? res1 : res2;
 }
