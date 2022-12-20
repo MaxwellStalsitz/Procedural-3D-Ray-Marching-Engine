@@ -2,31 +2,34 @@
 
 Realtime OpenGL rendering engine that has support for ray marching and ray tracing rendering.
 
-Engine environment created using Dear ImGui.
+Engine interface created using [Dear ImGui](https://github.com/ocornut/imgui).
 
-Features
-    Ray marching and Ray tracing rendering
-    Preset/example scenes
-    Fractal rendering example (ray marching)
-    Scene editor (ray marching)
-    Performance metrics (graphs) and custom parameters
+## **Features**
+* Ray marching and Ray tracing rendering
+* Preset/example scenes
+* Fractal rendering example (ray marching)
+* Scene editor (ray marching)
+* Performance metrics (graphs) and custom parameters
 
-Lighting Effects
-    Antialiasing
-    Ambient Occlusion
-    Reflections
-    Phong lighting model
+## **Lighting Effects**
+* Antialiasing
+* Ambient Occlusion
+* Reflections
+* Phong lighting model
 
-Libraries
-    OpenGL
-    GLFW
-    GLM
-    Dear ImGui
+## **Libraries**
+* OpenGL
+* GLFW
+* GLM
+* Dear ImGui
 
-Images
+## **Images**
 
 ![annotatedengine](https://user-images.githubusercontent.com/94473602/208584075-50f6b0ab-2e87-45bf-a7e4-d1e70694cfe2.png)
+*Rendering Engine Layout*
 
 ![rendering](https://user-images.githubusercontent.com/94473602/208584047-92380933-df19-4def-b6c0-11c76665d830.png)
+*Max settings enabled rendering of different primitives (+ reflections)*
 
 ![mandelbulb](https://user-images.githubusercontent.com/94473602/208584035-2631a828-e886-4dcc-8066-153b8c5d219b.png)
+*3D "Mandelbulb" fractal; power 8*
