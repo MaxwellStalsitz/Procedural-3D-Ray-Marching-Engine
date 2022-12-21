@@ -106,12 +106,6 @@ int WinMain()
     Shader rayMarchingShader("rmvertex.glsl", "rmfragment.glsl");
     Shader rayTracingShader("rtvertex.glsl", "rtfragment.glsl");
 
-    //setting the windows icon
-    GLFWimage images[1];
-    images[0].pixels = stbi_load("textures/moss.png", &images[0].width, &images[0].height, 0, 4); //rgba channels 
-    glfwSetWindowIcon(window, 1, images);
-    stbi_image_free(images[0].pixels);
-
     //making sure loaded images are in the proper orientation (flipping them)
     stbi_set_flip_vertically_on_load(true);
 
@@ -193,7 +187,7 @@ int WinMain()
     //game loop
     while (!glfwWindowShouldClose(window))
     {
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         //delta time setup
         float currentFrame = glfwGetTime();
@@ -201,7 +195,7 @@ int WinMain()
         //fixed delta time (because deltatime is not constant, meaning that it's not good for physics)
         fixedDeltaTime += (currentFrame - lastFrame) / limitFPS;
         deltaTime = currentFrame - lastFrame;
-		
+
         lastFrame = currentFrame;
 
         while (fixedDeltaTime >= 1.0) {
@@ -209,8 +203,8 @@ int WinMain()
             fixedDeltaTime--;
         }
 
-		//milliseconds per frame
-		float mspf = deltaTime * 1000;
+        //milliseconds per frame
+        float mspf = deltaTime * 1000;
 
         //prevents camera jerk at start
         direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -235,9 +229,11 @@ int WinMain()
         glfwGetCursorPos(window, &xpo, &ypo);
 
         // ------------------------------------------------------------------------
-        //setting up shader (ray marching or ray tracing) and sending data to uniform variables
+        //setting up shader (ray marching or ray tracing) and sending data to uniform variables in fragment shader
 
         if (rayMarching) {
+            //ray marching variables
+
             rayMarchingShader.use();
             rayMarchingShader.setVec2("resolution", glm::vec2(screenWidth * 1.2857, screenHeight));
             rayMarchingShader.setFloat("time", glfwGetTime());
@@ -272,36 +268,45 @@ int WinMain()
 
             rayMarchingShader.setBool("fogEnabled", fogEnabled);
             rayMarchingShader.setFloat("fogVisibility", fogVisibility);
+
+            //sending array of object values to shader for scene editor
+            //there is probably a better solution to this
+
+            const char* name;
+
+            for (int i = 0; i < numberOfEntities; ++i)
+            {
+                std::stringstream ss;
+                ss << "objectPositions[" << i << "]";
+                std::string str = ss.str();
+                name = str.c_str();
+
+                rayMarchingShader.setVec3(name, sceneArray[i].position);
+            }
         }
-		else {
-			rayTracingShader.use();
+        else {
+            //ray tracing variables
+
+            rayTracingShader.use();
             rayTracingShader.setVec2("resolution", glm::vec2(screenWidth, screenHeight));
             rayTracingShader.setVec2("mouse", glm::vec2(xpo, ypo));
-            rayTracingShader.setBool("antiAliasing", antiAliasing);
-            rayTracingShader.setBool("ambientOcclusion", ambientOcclusion);
-            rayTracingShader.setVec3("cameraPos", cameraPos);
             rayTracingShader.setFloat("time", glfwGetTime());
+
+            rayTracingShader.setVec3("cameraPos", cameraPos);
             rayTracingShader.setVec3("direction", direction);
             rayTracingShader.setVec3("cameraFront", cameraFront);
+
             rayMarchingShader.setBool("fogEnabled", fogEnabled);
             rayTracingShader.setFloat("fogVisibility", fogVisibility);
 
-            rayTracingShader.setBool("reflections", reflections);
             rayTracingShader.setBool("useLighting", useLighting);
-		}
-        // ------------------------------------------------------------------------
-        
-        const char* name;
 
-        for (int i = 0; i < numberOfEntities; ++i)
-        {
-            std::stringstream ss;
-            ss << "objectPositions[" << i << "]";
-            std::string str = ss.str();
-			name = str.c_str();
-
-            rayMarchingShader.setVec3(name, sceneArray[i].position);
+            rayTracingShader.setBool("reflections", reflections);
+            rayTracingShader.setBool("antiAliasing", antiAliasing);
+            rayTracingShader.setBool("ambientOcclusion", ambientOcclusion);
         }
+
+        // ------------------------------------------------------------------------
 
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -310,16 +315,17 @@ int WinMain()
         ImGuiWindowFlags window_flags_adjustable = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoFocusOnAppearing;
         ImGuiWindowFlags window_flags_parameters = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
         ImGuiWindowFlags window_flags_child = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus;
-		ImGuiWindowFlags window_flags_editor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
-		ImGuiWindowFlags window_flags_entityEditor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+        ImGuiWindowFlags window_flags_editor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
+        ImGuiWindowFlags window_flags_entityEditor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
         // ------------------------------------------------------------------------
 
         //getting framerate
         float frameRate = ImGui::GetIO().Framerate;
 
-        ImGui::SetNextWindowPos(ImVec2(screenWidth*0.96, screenHeight*0.95));
+        ImGui::SetNextWindowPos(ImVec2(screenWidth * 0.96, screenHeight * 0.95));
         ImGui::SetNextWindowSize(ImVec2(150, 50));
 
+        //fps counter (bottom right corner)
         if (!paused) {
             ImGui::Begin("FPS", nullptr, window_flags_transparent);
             ImGui::PushFont(font1);
@@ -328,20 +334,20 @@ int WinMain()
             ImGui::End();
         }
 
-        //custom resolutions based on imgui options
+		//custom screen resolution
         if (selectedItem == 0) {
             screenWidth = 1280;
             screenHeight = 720;
         }
-        else if (selectedItem == 1) {
+        if (selectedItem == 1) {
             screenWidth = 1920;
             screenHeight = 1080;
         }
-        else if (selectedItem == 2) {
+        if (selectedItem == 2) {
             screenWidth = 2560;
             screenHeight = 1440;
         }
-
+		
         // ------------------------------------------------------------------------
 
         float editorWidth = 400;
@@ -449,7 +455,6 @@ int WinMain()
                         }
                         else
                             ImGui::Indent(-32.0f);
-							
                         
                         ImGui::Checkbox("Fog", &fogEnabled);
                             if (fogEnabled) {
@@ -753,8 +758,6 @@ int WinMain()
                 }
 
                 ImGui::Text("");
-                //ImGui::Text(glm::to_string(cameraPos).c_str());
-                //ImGui::Text(glm::to_string(direction).c_str());
 
                 ImGui::PopStyleVar();
                 ImGui::End();
@@ -858,7 +861,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 //input (called every frame)
 void processInput(GLFWwindow* window) 
 {
-    if (!paused && scene != 4) {
+    if (!paused) {
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
             cameraSpeed = glm::mix(cameraSpeed, (runSpeed / 2) * movementMultiplier, runSmoothing / 10);
         }
