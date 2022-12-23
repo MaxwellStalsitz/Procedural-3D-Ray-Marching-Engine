@@ -243,7 +243,9 @@ int WinMain()
             rayMarchingShader.setVec3("cameraPos", cameraPos);
             rayMarchingShader.setVec3("direction", direction);
             rayMarchingShader.setVec3("cameraFront", cameraFront);
+			
             rayMarchingShader.setBool("useLighting", useLighting);
+            rayMarchingShader.setVec3("lightPosition", lightPosition);
 
             rayMarchingShader.setInt("MAX_STEPS", MAX_STEPS);
             rayMarchingShader.setFloat("MAX_DIST", MAX_DIST);
@@ -442,6 +444,13 @@ int WinMain()
                         ImGui::Checkbox("Lighting", &useLighting);
                         ImGui::Indent(32.0f);
                         if (useLighting) {
+
+                            if (scene != 4) {
+                                ImGui::InputFloat3("Light Position", &lightPosition.x);
+                            }
+                            else
+                                lightPosition = glm::vec3(0.5, 5.5, -5.0);
+                            
                             ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
                             ImGui::Indent(32.0f);
                             if (ambientOcclusion)

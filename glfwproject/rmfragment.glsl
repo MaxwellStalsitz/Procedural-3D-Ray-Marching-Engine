@@ -5,7 +5,9 @@ uniform vec2 resolution;
 uniform float time;
 uniform float deltaTime;
 uniform vec2 mousePosition;
+
 uniform bool useLighting;
+uniform vec3 lightPosition;
 
 uniform vec3 direction;
 uniform vec3 cameraPos;
@@ -73,12 +75,12 @@ float sdBox( vec3 p, vec3 b )
 
 float sdBoxFrame( vec3 p, vec3 b, float e )
 {
-      p = abs(p  )-b;
-	  vec3 q = abs(p+e)-e;
-	  return min(min(
-      length(max(vec3(p.x,q.y,q.z),0.0))+min(max(p.x,max(q.y,q.z)),0.0),
-      length(max(vec3(q.x,p.y,q.z),0.0))+min(max(q.x,max(p.y,q.z)),0.0)),
-      length(max(vec3(q.x,q.y,p.z),0.0))+min(max(q.x,max(q.y,p.z)),0.0));
+    p = abs(p  )-b;
+	vec3 q = abs(p+e)-e;
+	return min(min(
+    length(max(vec3(p.x,q.y,q.z),0.0))+min(max(p.x,max(q.y,q.z)),0.0),
+    length(max(vec3(q.x,p.y,q.z),0.0))+min(max(q.x,max(p.y,q.z)),0.0)),
+    length(max(vec3(q.x,q.y,p.z),0.0))+min(max(q.x,max(q.y,p.z)),0.0));
 }
 
 float sdSphere(vec3 p, float s)
@@ -151,21 +153,14 @@ vec3 rotateY(vec3 p, float a) {
     return vec3(cos(a) * p.x + sin(a) * p.z, p.y, -sin(a) * p.x + cos(a) * p.z);
 }
 
-float sdHouse( vec3 p )
-{
-    vec3 q = abs(p) - vec3(1.0, 1.0, 0.5);
-    return min(max(q.x,max(q.y,q.z)),0.0) + length(max(q,0.0));
-}
 
 vec2 demoScene(vec3 pos)
 {
 	float distanceToSDF;
 
-	float ID = 3.0;
-	//vec3 position = vec3(-.5,0,-6);
-	vec3 position = vec3(0,0,-3);
-	//distanceToSDF = sdTorus(rotateX(pos-position, 90.0 * PI / 180.0), vec2(0.75,0.15));
-	distanceToSDF = sdSphere(pos - position, 1);
+	float ID = 4.0;
+	vec3 position = vec3(-.5,0,-6);
+	distanceToSDF = sdTorus(rotateX(pos-position, 90.0 * PI / 180.0), vec2(0.75,0.15));
 	vec2 sphere1 = vec2(distanceToSDF, ID);
 
 	ID = 5.0;
@@ -185,8 +180,8 @@ vec2 demoScene(vec3 pos)
 
 	vec2 result;
 	result = mergeResults(plane, sphere1);
-	//result = mergeResults(result, sphere2);
-	//result = mergeResults(result, box);
+	result = mergeResults(result, sphere2);
+	result = mergeResults(result, box);
 
 	return result;
 }
@@ -206,7 +201,7 @@ vec2 manyEntityScene(vec3 pos){
 
 	for (int i = 0; i < 100; i++){
 		
-		// make a 10x10 row of spheres
+		// makes a 10x10 row of spheres
 		float x = float(i % 10) * 2.5;
 		float z = float(i / 10) * 2.5;
 		vec3 position = vec3(x, 0.0, z);
@@ -218,16 +213,6 @@ vec2 manyEntityScene(vec3 pos){
 	}
 
 	return result;
-}
-
-vec2 infiniteScene(vec3 pos){
-	pos = mod(pos, 4.0) - 4.0 * 0.5;
-
-	float id = 6.0;
-
-	vec2 sphere1 = vec2(length(pos) - 0.5, id);
-
-	return sphere1;
 }
 
 float plane( vec3 p, vec4 n ) {
@@ -339,21 +324,7 @@ vec3 getMaterial(vec3 p, float id)
 		m = vec3(0.49, 0.74, 0.4);
 	else if (id == 5.0)
 		m = vec3(0.247, 0.427, 0.819);
-	else if (id == 6.0){ // random
-	vec3 ip = floor(p);
 
-
-	float rnd = fract(sin(dot(ip, vec3(27.17, 112.61, 57.53)))*43758.5453);
-    
-    // Color up the objects in a cubic checkered arrangement using a subtle version
-    // of IQ's palette formula.
-    m = (fract(dot(ip, vec3(.5))) > .001)? 
-         .5 + .45*cos(mix(3., 4., rnd) + vec3(.9, .45, 1.5)) //vec3(.6, .3, 1.)
-         : vec3(.7 + .3*rnd);
-    
-	}
-
-	
     return m;
 }
 
@@ -445,12 +416,6 @@ vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t){
 	vec3 col;
 	
 	vec3 normal = calcNormal(rayOrigin);
-	vec3 lightPosition;
-
-	if (scene != 4)
-		lightPosition = vec3(0,2,0);
-	else
-		lightPosition = vec3(0.5, 5.5, -5.0);
 
 	vec3 light = normalize(lightPosition - rayOrigin);
 	vec3 H = reflect(-light, normal);

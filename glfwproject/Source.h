@@ -51,6 +51,8 @@ float reflectionVisibility = 0.5f;
 
 bool fogEnabled = true;
 float fogVisibility = 1.0f;
+
+glm::vec3 lightPosition = glm::vec3(0,2,0);
 // ------------------------------------------------------------------------
 bool start = false;
 
