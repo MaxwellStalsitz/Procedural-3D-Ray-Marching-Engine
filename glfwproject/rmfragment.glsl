@@ -417,7 +417,13 @@ vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t){
 	
 	vec3 normal = calcNormal(rayOrigin);
 
-	vec3 light = normalize(lightPosition - rayOrigin);
+	vec3 lp;
+	if (scene != 4)
+		lp = lightPosition;
+	else 
+		lp = vec3(0.5, 5.5, -5.0);
+
+	vec3 light = normalize(lp - rayOrigin);
 	vec3 H = reflect(-light, normal);
 	vec3 V = -rayDirection;
 
@@ -427,7 +433,7 @@ vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t){
 	vec3 material = getMaterial(rayOrigin, t.y);
 
 	float diffuse;
-	diffuse = clamp(dot(normal, normalize(lightPosition - rayOrigin)), 0.0, 1.0);
+	diffuse = clamp(dot(normal, normalize(lp - rayOrigin)), 0.0, 1.0);
 	diffuse *= 5.0 / dot(light - rayOrigin, light - rayOrigin);
 	vec3 ambient = material * 0.25;
 

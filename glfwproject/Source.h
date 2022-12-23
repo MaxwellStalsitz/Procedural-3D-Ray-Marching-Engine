@@ -40,7 +40,7 @@ bool antiAliasing = false;
 bool ambientOcclusion = true;
 int occlusionSamples = 8;
 
-float power = 3;
+float power = 8;
 int iterations = 8;
 
 bool animate = true;

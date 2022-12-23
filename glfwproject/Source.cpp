@@ -78,7 +78,7 @@ int WinMain()
     glfwWindowHint(GLFW_AUTO_ICONIFY, GL_FALSE);
 
     //creating the window with according width and height
-    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "Science Project", glfwGetPrimaryMonitor(), NULL);
+    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "OpenGL Rendering Engine", glfwGetPrimaryMonitor(), NULL);
 
     //fail case for glfw
     if (window == NULL){
@@ -101,6 +101,12 @@ int WinMain()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    //setting application thumbnail
+    GLFWimage images[1];
+    images[0].pixels = stbi_load("images/enginethumbnail.png", &images[0].width, &images[0].height, 0, 4); //rgba channels 
+    glfwSetWindowIcon(window, 1, images);
+    stbi_image_free(images[0].pixels);
 
     //shader setup
     Shader rayMarchingShader("rmvertex.glsl", "rmfragment.glsl");
@@ -369,6 +375,7 @@ int WinMain()
         ImGui::SetNextWindowPos(ImVec2((screenWidth - editorWidth) / 2, (screenHeight - editorHeight) / 2));
 
         if (ImGui::BeginMainMenuBar()){
+
             if (ImGui::BeginMenu("File")){
 
                 if(ImGui::BeginMenu("Options")) {
@@ -402,6 +409,28 @@ int WinMain()
                 ImGui::EndMenu();
             }
 
+            std::string sceneText;
+
+            switch (scene) {
+                case(1):
+                    sceneText = " Demo Scene ";
+                    break;
+                case(2):
+					sceneText = " Mandelbulb ";
+					break;
+                case(3):
+					sceneText = " Scene Editor ";
+					break;
+                case(4):
+					sceneText = " Cornell Box ";
+					break;
+            }
+
+            auto sceneTextWidth = ImGui::CalcTextSize(sceneText.c_str()).x;
+            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - sceneTextWidth) / 2);
+
+            ImGui::Text(sceneText.c_str());
+
             ImGui::EndMainMenuBar();
         }
 
@@ -430,9 +459,9 @@ int WinMain()
 
                         //formatting and setting up imgui inputs for key variables
 
-                        ImGui::SliderInt("Steps", &MAX_STEPS, 1, 1000);
-                        ImGui::SliderFloat("Max Distance", &MAX_DIST, 0, 2500);
-                        ImGui::SliderFloat("Min Distance", &MIN_DIST, 0.001f, 0.25f);
+                        ImGui::SliderInt(" Steps", &MAX_STEPS, 1, 1000);
+                        ImGui::SliderFloat(" Max Distance", &MAX_DIST, 0, 2500);
+                        ImGui::SliderFloat(" Min Distance", &MIN_DIST, 0.001f, 0.25f);
 
                         if (MIN_DIST == 0) {
 							MIN_DIST = 0.001f;
@@ -448,9 +477,7 @@ int WinMain()
                             if (scene != 4) {
                                 ImGui::InputFloat3("Light Position", &lightPosition.x);
                             }
-                            else
-                                lightPosition = glm::vec3(0.5, 5.5, -5.0);
-                            
+
                             ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
                             ImGui::Indent(32.0f);
                             if (ambientOcclusion)
@@ -472,7 +499,6 @@ int WinMain()
 								ImGui::Unindent(32.0f);
                             }
                         ImGui::Indent(64.0f);
-                        //ImGui::Indent(64.0f);
 
                         if (scene == 2) {
                             ImGui::Indent(-64.0f);
@@ -483,12 +509,14 @@ int WinMain()
                             ImGui::PushFont(font2);
                             ImGui::Text("");
                             ImGui::PopFont();
+							
                             ImGui::SliderFloat("Power", &power, 1, 10);
                             ImGui::SliderInt("Iterations", &iterations, 1, 20);
                             ImGui::Text("");
                             ImGui::Checkbox("Animate", &animate);
+                            ImGui::Indent(32.0f);
+
                             if (animate) {
-								ImGui::Indent(32.0f);
 								ImGui::SliderFloat("Time Multiplier", &timeMultiplier, 0, 1);
                             }
                             ImGui::Indent(32.0f);
@@ -631,21 +659,19 @@ int WinMain()
                             auto textWidth = ImGui::CalcTextSize(addText.c_str()).x;
                             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 2);
 
-                            if (ImGui::Button("  Add  ")) {
-                                if (!(entityName[0] == '\0')) {
-                                    sceneObject entity;
-                                    entity.name = entityName;
-                                    entity.position = editorPosition;
-                                    entity.rotation = editorRotation;
-                                    entity.scale = editorScale;
+                            if (ImGui::Button("  Add  ") && !(entityName[0] == '\0')) {
+                                sceneObject entity;
+                                entity.name = entityName;
+                                entity.position = editorPosition;
+                                entity.rotation = editorRotation;
+                                entity.scale = editorScale;
 
-                                    if (numberOfEntities < 25) {
-                                        sceneArray[numberOfEntities] = entity;
-                                        numberOfEntities++;
-                                    }
-
-                                    sceneEditor = false;
+                                if (numberOfEntities < 25) {
+                                    sceneArray[numberOfEntities] = entity;
+                                    numberOfEntities++;
                                 }
+
+                                sceneEditor = false;
                             }
 
                             ImGui::EndTabItem();
@@ -684,55 +710,56 @@ int WinMain()
 
                 ImGui::Indent(-64.0f);
 
-                if (1 == 1) {
-                    ImGui::PushFont(font2);
-                    ImGui::Text("");
-                    ImGui::PopFont();
-                    ImGui::Separator();
-                    ImGui::Text("Graphs");
-                    ImGui::Separator();
+                // ------------------------------------------------------------------------
 
-                    //getting data for graph 2, and displaying both graphs
+                ImGui::PushFont(font2);
+                ImGui::Text("");
+                ImGui::PopFont();
+                ImGui::Separator();
+                ImGui::Text("Graphs");
+                ImGui::Separator();
 
-                    static float values2[25] = {};
-                    static int values_offset2 = 0;
-                    static double refresh_time2 = 0.1;
+                //getting data for graph 2, and displaying both graphs
 
-                    if (refresh_time2 == 0.0)
-                        refresh_time2 = ImGui::GetTime();
+                static float values2[25] = {};
+                static int values_offset2 = 0;
+                static double refresh_time2 = 0.1;
 
-                    while (refresh_time2 < ImGui::GetTime()) {
-                        values2[values_offset] = mspf;
-                        values_offset2 = (values_offset2 + 1) % IM_ARRAYSIZE(values2);
-                        refresh_time2 += 1.0f / 60.0f;
-                    }
+                if (refresh_time2 == 0.0)
+                    refresh_time2 = ImGui::GetTime();
 
-                    float average2 = 0.0f;
-
-                    for (int n = 0; n < IM_ARRAYSIZE(values2); n++)
-                        average2 += values2[n];
-                    average2 /= (float)IM_ARRAYSIZE(values2);
-
-                    char overlay2[32];
-                    sprintf_s(overlay2, "Average: %f", average2);
-
-                    if (ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35, screenHeight / 3), false, window_flags_child)) {
-                        std::string text = "Frame Rate (FPS)";
-                        auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
-                        ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 2);
-                        ImGui::Text(text.c_str());
-
-                        ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0.0f, 1000.0f, ImVec2(screenWidth * 0.35, 350.0f));
-
-                        std::string mspfText = "Milliseconds Per Frame";
-                        auto mspfTextWidth = ImGui::CalcTextSize(mspfText.c_str()).x;
-                        ImGui::SetCursorPosX((ImGui::GetWindowWidth() - mspfTextWidth) / 2);
-                        ImGui::Text(mspfText.c_str());
-                        ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, 0.0f, 100.0f, ImVec2(screenWidth * 0.35, 330.0f));
-
-                        ImGui::EndChild();
-                    }
+                while (refresh_time2 < ImGui::GetTime()) {
+                    values2[values_offset] = mspf;
+                    values_offset2 = (values_offset2 + 1) % IM_ARRAYSIZE(values2);
+                    refresh_time2 += 1.0f / 60.0f;
                 }
+
+                float average2 = 0.0f;
+
+                for (int n = 0; n < IM_ARRAYSIZE(values2); n++)
+                    average2 += values2[n];
+                average2 /= (float)IM_ARRAYSIZE(values2);
+
+                char overlay2[32];
+                sprintf_s(overlay2, "Average: %f", average2);
+
+                if (ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35, screenHeight / 3), false, window_flags_child)) {
+                    std::string text = "Frame Rate (FPS)";
+                    auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
+                    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 2);
+                    ImGui::Text(text.c_str());
+
+                    ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0.0f, 1000.0f, ImVec2(screenWidth * 0.35, 350.0f));
+
+                    std::string mspfText = "Milliseconds Per Frame";
+                    auto mspfTextWidth = ImGui::CalcTextSize(mspfText.c_str()).x;
+                    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - mspfTextWidth) / 2);
+                    ImGui::Text(mspfText.c_str());
+                    ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, 0.0f, 100.0f, ImVec2(screenWidth * 0.35, 330.0f));
+
+                    ImGui::EndChild();
+                }
+                
                 // ------------------------------------------------------------------------
 
                 ImGui::PushFont(font2);
@@ -755,18 +782,18 @@ int WinMain()
                         useLighting = true;
                         ambientOcclusion = true;
                         occlusionSamples = 8;
-                        power = 7;
+                        power = 8;
                         iterations = 8;
                         animate = true;
                         timeMultiplier = 1.0f;
                         reflections = false;
                         reflectionVisibility = 0.5f;
+                        fogEnabled = true;
+                        fogVisibility = 1.0f;
                     }
                     ImGui::Separator();
 
                 }
-
-                ImGui::Text("");
 
                 ImGui::PopStyleVar();
                 ImGui::End();
