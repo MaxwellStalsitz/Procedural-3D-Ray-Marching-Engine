@@ -140,6 +140,7 @@ int WinMain()
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     ImFont* font1 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 24.0f, NULL);
     ImFont* font2 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 12.0f, NULL);
+    ImFont* font3 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 36.0f, NULL);
 
     // ------------------------------------------------------------------------
 
@@ -426,10 +427,7 @@ int WinMain()
 					break;
             }
 
-            auto sceneTextWidth = ImGui::CalcTextSize(sceneText.c_str()).x;
-            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - sceneTextWidth) / 2);
-
-            ImGui::Text(sceneText.c_str());
+            centerText(sceneText);
 
             ImGui::EndMainMenuBar();
         }
@@ -460,7 +458,7 @@ int WinMain()
                         //formatting and setting up imgui inputs for key variables
 
                         ImGui::SliderInt(" Steps", &MAX_STEPS, 1, 1000);
-                        ImGui::SliderFloat(" Max Distance", &MAX_DIST, 0, 2500);
+                        ImGui::SliderFloat(" Max Distance", &MAX_DIST, 0, 100);
                         ImGui::SliderFloat(" Min Distance", &MIN_DIST, 0.001f, 0.25f);
 
                         if (MIN_DIST == 0) {
@@ -472,6 +470,7 @@ int WinMain()
                         ImGui::Text("");
                         ImGui::Checkbox("Lighting", &useLighting);
                         ImGui::Indent(32.0f);
+
                         if (useLighting) {
 
                             if (scene != 4) {
@@ -485,19 +484,23 @@ int WinMain()
 							ImGui::Unindent(32.0f);
                             ImGui::Checkbox("Reflections", &reflections);
                             ImGui::Indent(32.0f);
+
                             if (reflections)
-                                ImGui::SliderFloat("Reflection Visibility", &reflectionVisibility, 0, 1);
+                                ImGui::SliderFloat("Visibility", &reflectionVisibility, 0, 1);
+
                             ImGui::Unindent(64.0f);
                         }
                         else
                             ImGui::Indent(-32.0f);
                         
                         ImGui::Checkbox("Fog", &fogEnabled);
-                            if (fogEnabled) {
-								ImGui::Indent(32.0f);
-                                ImGui::SliderFloat("Fog Visibility", &fogVisibility, 0.0, 1.0);
-								ImGui::Unindent(32.0f);
-                            }
+
+                        if (fogEnabled) {
+							ImGui::Indent(32.0f);
+                            ImGui::SliderFloat("Fog Visibility", &fogVisibility, 0.0, 1.0);
+							ImGui::Unindent(32.0f);
+                        }
+
                         ImGui::Indent(64.0f);
 
                         if (scene == 2) {
@@ -517,7 +520,7 @@ int WinMain()
                             ImGui::Indent(32.0f);
 
                             if (animate) {
-								ImGui::SliderFloat("Time Multiplier", &timeMultiplier, 0, 1);
+                                ImGui::DragFloat("Time Multiplier", &timeMultiplier, 0.001, 0, 1, NULL, ImGuiSliderFlags_AlwaysClamp);
                             }
                             ImGui::Indent(32.0f);
                         }
@@ -543,6 +546,7 @@ int WinMain()
 
                             ImGui::SetNextItemOpen(true);
 
+                            //rendering heirarchy system through imgui
                             if (ImGui::TreeNode("Scene Heirarchy"))
                             {
                                 ImGuiTreeNodeFlags node_flags = window_flags_parameters;
@@ -564,102 +568,79 @@ int WinMain()
                                 glm::vec3 position = sceneArray[node_clicked].position;
                                 ImGui::InputFloat3("Position", &position.x);
                                 sceneArray[node_clicked].position = position;
+
+                                if (ImGui::Button("Delete")) {
+                                    sceneObject* newArray = deleteElement(sceneArray, node_clicked);
+									numberOfEntities--;
+
+                                    //convert newArray pointer to non pointer array
+
+
+                                    
+								}
                             }
 
-                            ImGui::Text("");
                             ImGui::Separator();
                             ImGui::Text("Add Entity");
                             ImGui::Separator();
-                            ImGui::Text("");
 
                             static char entityName[128] = "";
 
-                            std::string nameText = " Entity Name ";
-                            auto nameTextWidth = ImGui::CalcTextSize(nameText.c_str()).x;
-                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - nameTextWidth) / 2);
-                            ImGui::Text(nameText.c_str());
+                            centerText(" Entity Name ");
 
-                            std::string text2 = " ";
-                            auto textWidth2 = ImGui::CalcTextSize(text2.c_str()).x;
-                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth2) / 2);
-                            ImGui::InputText(text2.c_str(), entityName, IM_ARRAYSIZE(entityName));
+                            ImGui::PushItemWidth(screenWidth/2.85);
+                            ImGui::InputText(" ", entityName, IM_ARRAYSIZE(entityName));
+                            ImGui::PopItemWidth();
 
-                            ImGui::InputFloat3("Position", &editorPosition.x);
-                            ImGui::InputFloat3("Rotation", &editorRotation.x);
-                            ImGui::InputFloat3("Scale", &editorScale.x);
+                            ImGui::InputFloat3(" Entity Position", &editorPosition.x);
+                            ImGui::InputFloat3(" Entity Rotation", &editorRotation.x);
+                            ImGui::InputFloat3(" Entity Scale", &editorScale.x);
 
                             // ------------------------------------------------------------------------
                             //imgui color picker for material, code from imgui demo scene
-                            static ImVec4 color = ImVec4(114.0f / 255.0f, 144.0f / 255.0f, 154.0f / 255.0f, 200.0f / 255.0f);
+
+                            ImGui::PushFont(font2);
+                            ImGui::Text("");
+                            ImGui::PopFont();
+
+                            std::string materialColorText = "Material Color";
+                            auto materialTextWidth = ImGui::CalcTextSize(materialColorText.c_str()).x;
+
+                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - materialTextWidth) * 0.075f);
+                            ImGui::Text(materialColorText.c_str());
+
+                            static ImVec4 color = ImVec4(0.5f, 0.5f, 0.5f,1.0f);
                             static ImVec4 backup_color;
 
-                            static bool saved_palette_init = true;
-                            static ImVec4 saved_palette[32] = {};
-                            if (saved_palette_init) {
-                                for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++) {
-                                    ImGui::ColorConvertHSVtoRGB(n / 31.0f, 0.8f, 0.8f,
-                                        saved_palette[n].x, saved_palette[n].y, saved_palette[n].z);
-                                    saved_palette[n].w = 1.0f; // Alpha
-                                }
-                                saved_palette_init = false;
-                            }
+                            //
+                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 50) * 0.15f);
+                            //
 
-                            if (ImGui::ColorButton("MyColor##3b", color, window_flags_editor)) {
-                                ImGui::OpenPopup("mypicker");
+                            if (ImGui::ColorButton("Material Color", color, window_flags_editor, ImVec2(50,50))) {
+                                ImGui::OpenPopup("Color Picker");
                                 backup_color = color;
                             }
 
-                            ImGui::SameLine(0, ImGui::GetStyle().ItemInnerSpacing.x);
-  
-                            if (ImGui::BeginPopup("mypicker"))
+                            if (ImGui::BeginPopup("Color Picker"))
                             {
                                 ImGui::Text("Material Color");
                                 ImGui::Separator();
                                 ImGui::ColorPicker4("##picker", (float*)&color, window_flags_editor | ImGuiColorEditFlags_NoSidePreview | ImGuiColorEditFlags_NoSmallPreview);
                                 ImGui::SameLine();
 
-                                ImGui::BeginGroup();
-                                ImGui::Text("Current");
-                                ImGui::ColorButton("##current", color, ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(60, 40));
-                                ImGui::Text("Previous");
-                                if (ImGui::ColorButton("##previous", backup_color, ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_AlphaPreviewHalf, ImVec2(60, 40)))
-                                    color = backup_color;
-                                ImGui::Separator();
-                                ImGui::Text("Palette");
-                                for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
-                                {
-                                    ImGui::PushID(n);
-                                    if ((n % 8) != 0)
-                                        ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
-
-                                    ImGuiColorEditFlags palette_button_flags = ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip;
-                                    if (ImGui::ColorButton("##palette", saved_palette[n], palette_button_flags, ImVec2(20, 20)))
-                                        color = ImVec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, color.w);
-
-                                    if (ImGui::BeginDragDropTarget())
-                                    {
-                                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_3F))
-                                            memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 3);
-                                        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload(IMGUI_PAYLOAD_TYPE_COLOR_4F))
-                                            memcpy((float*)&saved_palette[n], payload->Data, sizeof(float) * 4);
-                                        ImGui::EndDragDropTarget();
-                                    }
-
-                                    ImGui::PopID();
-                                }
-                                ImGui::EndGroup();
                                 ImGui::EndPopup();
                             }
+
                             // ------------------------------------------------------------------------
+                            ImGui::SameLine();
 
-                            ImGui::Text("Material Color");
-                            ImGui::Text("");
+                            ImGui::PushFont(font3); // larger font size
 
-                            std::string addText = "Add";
+                            std::string addText = " Create Entity ";
                             auto textWidth = ImGui::CalcTextSize(addText.c_str()).x;
-                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 2);
+                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 1.25);
 
-                            if (ImGui::Button("  Add  ") && !(entityName[0] == '\0')) {
+                            if (ImGui::Button(addText.c_str()) && !(entityName[0] == '\0')) {
                                 sceneObject entity;
                                 entity.name = entityName;
                                 entity.position = editorPosition;
@@ -673,6 +654,8 @@ int WinMain()
 
                                 sceneEditor = false;
                             }
+
+                            ImGui::PopFont();
 
                             ImGui::EndTabItem();
                         }
@@ -706,17 +689,18 @@ int WinMain()
                 average /= (float)IM_ARRAYSIZE(values);
 
                 char overlay[32];
-                sprintf_s(overlay, "Average: %f", average);
+                sprintf_s(overlay, "Average: %f", average); //writing out fps average above graph
 
                 ImGui::Indent(-64.0f);
 
                 // ------------------------------------------------------------------------
 
-                ImGui::PushFont(font2);
+                ImGui::PushFont(font2); // smaller font size
                 ImGui::Text("");
                 ImGui::PopFont();
+
                 ImGui::Separator();
-                ImGui::Text("Graphs");
+                ImGui::Text("Performance");
                 ImGui::Separator();
 
                 //getting data for graph 2, and displaying both graphs
@@ -744,18 +728,12 @@ int WinMain()
                 sprintf_s(overlay2, "Average: %f", average2);
 
                 if (ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35, screenHeight / 3), false, window_flags_child)) {
-                    std::string text = "Frame Rate (FPS)";
-                    auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
-                    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 2);
-                    ImGui::Text(text.c_str());
 
+                	centerText("Frame Rate (FPS)");
                     ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0.0f, 1000.0f, ImVec2(screenWidth * 0.35, 350.0f));
 
-                    std::string mspfText = "Milliseconds Per Frame";
-                    auto mspfTextWidth = ImGui::CalcTextSize(mspfText.c_str()).x;
-                    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - mspfTextWidth) / 2);
-                    ImGui::Text(mspfText.c_str());
-                    ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, 0.0f, 100.0f, ImVec2(screenWidth * 0.35, 330.0f));
+                    centerText("Milliseconds Per Frame");
+                	ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, 0.0f, 100.0f, ImVec2(screenWidth * 0.35, 330.0f));
 
                     ImGui::EndChild();
                 }
@@ -768,7 +746,6 @@ int WinMain()
                 ImGui::Separator();
 
                 if (!inEditor) {
-
                     std::string resetText = " Reset to Defaults ";
                     auto resetTextWidth = ImGui::CalcTextSize(resetText.c_str()).x;
                     ImGui::SetCursorPosX((ImGui::GetWindowWidth() - resetTextWidth) / 2);
@@ -790,6 +767,7 @@ int WinMain()
                         reflectionVisibility = 0.5f;
                         fogEnabled = true;
                         fogVisibility = 1.0f;
+                        lightPosition = glm::vec3(0, 2, 0);
                     }
                     ImGui::Separator();
 
@@ -826,6 +804,36 @@ int WinMain()
     //glfw shutdown
     glfwTerminate();
     return 0;
+}
+
+sceneObject* deleteElement(sceneObject arr[], int index) {
+    int n = sizeof(arr) / sizeof(arr[0]);
+
+    sceneObject* newArr = new sceneObject[n - 1];
+
+    // Shift all elements after the specified index to the left
+
+    for (int i = index; i < n - 1; i++) {
+        arr[i] = arr[i + 1];
+    }
+
+    int j = 0;
+    for (int i = 0; i < n; i++) {
+        if (i != index) {
+            newArr[j] = arr[i];
+            j++;
+        }
+    }
+
+    return newArr;
+}
+
+void centerText(std::string text) {
+    auto windowWidth = ImGui::GetWindowSize().x;
+    auto textWidth = ImGui::CalcTextSize(text.c_str()).x;
+
+    ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
+    ImGui::Text(text.c_str());
 }
 
 

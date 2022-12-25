@@ -15,6 +15,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void processInput(GLFWwindow* window);
 
+void centerText(std::string text);
+
 unsigned int texture;
 
 double xpo, ypo;
@@ -32,7 +34,7 @@ bool rayMarching = true;
 bool useLighting = true;
 
 int MAX_STEPS = 325;
-float MAX_DIST = 500.0;
+float MAX_DIST = 100.0;
 float MIN_DIST = 0.02;
 
 bool antiAliasing = false;
@@ -82,7 +84,7 @@ int node_clicked = -1;
 
 glm::vec3 editorPosition = glm::vec3(0.0f);
 glm::vec3 editorRotation = glm::vec3(0.0f);
-glm::vec3 editorScale = glm::vec3(0.0f);
+glm::vec3 editorScale = glm::vec3(1.0f);
 
 //sceneObject class, for rendering custmo objects on the fly
 class sceneObject {
@@ -95,6 +97,8 @@ class sceneObject {
 };
 
 sceneObject sceneArray[25];
+
+sceneObject* deleteElement(sceneObject arr[], int index);
 // ------------------------------------------------------------------------
 
 float vertices[] = {

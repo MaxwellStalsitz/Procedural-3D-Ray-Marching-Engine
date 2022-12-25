@@ -159,7 +159,7 @@ vec2 demoScene(vec3 pos)
 	float distanceToSDF;
 
 	float ID = 4.0;
-	vec3 position = vec3(-.5,0,-6);
+	vec3 position = vec3(-.5,0.0,-6);
 	distanceToSDF = sdTorus(rotateX(pos-position, 90.0 * PI / 180.0), vec2(0.75,0.15));
 	vec2 sphere1 = vec2(distanceToSDF, ID);
 
@@ -396,12 +396,12 @@ vec2 rayMarch(vec3 ro, vec3 rd){
         vec3 pos = ro + t * rd; // hit point
         vec2 m = map(pos);
 		
-        if(abs(m.x) < MIN_DIST){
+        if(m.x < MIN_DIST){
 			id = m.y;
             return vec2(t, id);
 		}
 
-		if (abs(m.x) > MAX_DIST){
+		if (abs(m.x) >= MAX_DIST){
 			break;
 		}
 
