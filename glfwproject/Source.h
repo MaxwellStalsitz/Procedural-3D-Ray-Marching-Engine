@@ -96,9 +96,9 @@ class sceneObject {
         glm::vec3 rotation;
 };
 
-sceneObject sceneArray[25];
+std::vector<sceneObject> sceneArray(25);
 
-sceneObject* deleteElement(sceneObject arr[], int index);
+std::vector<sceneObject> removeElement(std::vector<sceneObject> arr, int elementIndex);
 // ------------------------------------------------------------------------
 
 float vertices[] = {

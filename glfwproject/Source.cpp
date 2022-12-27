@@ -569,15 +569,11 @@ int WinMain()
                                 ImGui::InputFloat3("Position", &position.x);
                                 sceneArray[node_clicked].position = position;
 
-                                if (ImGui::Button("Delete")) {
-                                    sceneObject* newArray = deleteElement(sceneArray, node_clicked);
-									numberOfEntities--;
-
-                                    //convert newArray pointer to non pointer array
-
-
-                                    
-								}
+                                if (ImGui::Button("Delete")) { //delete entity
+                                    sceneArray = removeElement(sceneArray, node_clicked);
+                                    numberOfEntities--;			
+                                    node_clicked = -1;
+                                }
                             }
 
                             ImGui::Separator();
@@ -806,26 +802,12 @@ int WinMain()
     return 0;
 }
 
-sceneObject* deleteElement(sceneObject arr[], int index) {
-    int n = sizeof(arr) / sizeof(arr[0]);
+std::vector<sceneObject> removeElement(std::vector<sceneObject> arr, int elementIndex) {
+    std::vector<sceneObject>::iterator it = arr.begin();
+    std::advance(it, elementIndex);
+    arr.erase(it);
 
-    sceneObject* newArr = new sceneObject[n - 1];
-
-    // Shift all elements after the specified index to the left
-
-    for (int i = index; i < n - 1; i++) {
-        arr[i] = arr[i + 1];
-    }
-
-    int j = 0;
-    for (int i = 0; i < n; i++) {
-        if (i != index) {
-            newArr[j] = arr[i];
-            j++;
-        }
-    }
-
-    return newArr;
+    return arr;
 }
 
 void centerText(std::string text) {
