@@ -40,6 +40,7 @@ uniform float reflectionVisibility;
 
 uniform bool fogEnabled;
 uniform float fogVisibility;
+uniform float falloff;
 
 #define PI 3.1415926535897932384626433832795
 
@@ -268,8 +269,9 @@ vec2 mandelbulb(vec3 pos)
 		r = length(z);
 		if(r > 2.0) continue;
 		theta = atan(z.y / z.x);
+		
         if (animate)
-			phi = asin(z.z / r) + time*timeMultiplier;
+			phi = asin(z.z / r) + (time*timeMultiplier);
         else
 			phi = asin(z.z / r);
 		
@@ -455,7 +457,7 @@ vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t){
 	col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * d);
 
 	if (fogEnabled){
-		float fog = smoothstep(4.0, 50.0, t.x) * fogVisibility;
+		float fog = smoothstep(4.0, falloff, t.x) * fogVisibility;
 		col = mix(col, background, fog);
 	}
 

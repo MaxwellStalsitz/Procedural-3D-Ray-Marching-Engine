@@ -277,6 +277,7 @@ int WinMain()
 
             rayMarchingShader.setBool("fogEnabled", fogEnabled);
             rayMarchingShader.setFloat("fogVisibility", fogVisibility);
+            rayMarchingShader.setFloat("falloff", falloff);
 
             //sending array of object values to shader for scene editor
             //there is probably a better solution to this
@@ -447,13 +448,18 @@ int WinMain()
                 
                 if (ImGui::BeginTabBar("Parameter Tabs")) {
                     if (ImGui::BeginTabItem(" Ray Marching ")) {
+
+                        ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 2.15));
+
                         rayMarching = true;
                         inEditor = false;
 
                         ImGui::Separator();
                         ImGui::Text("Settings");
                         ImGui::Separator();
+                        ImGui::PushFont(font2);
                         ImGui::Text("");
+                        ImGui::PopFont();
 
                         //formatting and setting up imgui inputs for key variables
 
@@ -462,8 +468,8 @@ int WinMain()
                         ImGui::SliderFloat(" Min Distance", &MIN_DIST, 0.001f, 0.25f);
 
                         if (MIN_DIST == 0) {
-							MIN_DIST = 0.001f;
-						}
+                            MIN_DIST = 0.001f;
+                        }
 
                         ImGui::Text("");
                         ImGui::Checkbox("Anti-Aliasing (SSAA 4X)", &antiAliasing);
@@ -481,24 +487,29 @@ int WinMain()
                             ImGui::Indent(32.0f);
                             if (ambientOcclusion)
                                 ImGui::SliderInt("Samples", &occlusionSamples, 1, 50);
-							ImGui::Unindent(32.0f);
+                            ImGui::Unindent(32.0f);
                             ImGui::Checkbox("Reflections", &reflections);
                             ImGui::Indent(32.0f);
 
                             if (reflections)
-                                ImGui::SliderFloat("Visibility", &reflectionVisibility, 0, 1);
+                                ImGui::SliderFloat("Visibility", &reflectionVisibility, 0.0f, 1.0f);
 
                             ImGui::Unindent(64.0f);
                         }
                         else
                             ImGui::Indent(-32.0f);
-                        
+
                         ImGui::Checkbox("Fog", &fogEnabled);
 
                         if (fogEnabled) {
-							ImGui::Indent(32.0f);
-                            ImGui::SliderFloat("Fog Visibility", &fogVisibility, 0.0, 1.0);
-							ImGui::Unindent(32.0f);
+                            ImGui::Indent(32.0f);
+                            ImGui::SliderFloat("Fog Visibility", &fogVisibility, 0.0f, 1.0f);
+							
+                            int intFalloff = (int)falloff;
+                            ImGui::SliderInt("Fog Falloff", &intFalloff, 10, 100);
+                            falloff = (float)intFalloff;
+
+                            ImGui::Unindent(32.0f);
                         }
 
                         ImGui::Indent(64.0f);
@@ -512,7 +523,7 @@ int WinMain()
                             ImGui::PushFont(font2);
                             ImGui::Text("");
                             ImGui::PopFont();
-							
+
                             ImGui::SliderFloat("Power", &power, 1, 10);
                             ImGui::SliderInt("Iterations", &iterations, 1, 20);
                             ImGui::Text("");
@@ -525,9 +536,12 @@ int WinMain()
                             ImGui::Indent(32.0f);
                         }
                         ImGui::Indent(-64.0f);
-						
+
+                        ImGui::EndChild();
+
                         ImGui::EndTabItem();
-                    }
+                        
+                    }//
 
                     if (scene == 1) {
                         if (ImGui::BeginTabItem(" Ray Tracing ")) {
