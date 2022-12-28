@@ -27,6 +27,7 @@ float fixedDeltaTime;
 
 bool paused = false;
 bool inEditor = false;
+static bool inInfoMenu = false;
 
 // ------------------------------------------------------------------------
 bool rayMarching = true;

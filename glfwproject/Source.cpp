@@ -323,10 +323,11 @@ int WinMain()
         // ------------------------------------------------------------------------
         ImGuiWindowFlags window_flags_transparent = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus;
         ImGuiWindowFlags window_flags_adjustable = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoFocusOnAppearing;
-        ImGuiWindowFlags window_flags_parameters = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+        ImGuiWindowFlags window_flags_parameters = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
         ImGuiWindowFlags window_flags_child = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus;
         ImGuiWindowFlags window_flags_editor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
         ImGuiWindowFlags window_flags_entityEditor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+		ImGuiWindowFlags window_flags_info = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
         // ------------------------------------------------------------------------
 
         //getting framerate
@@ -376,11 +377,11 @@ int WinMain()
         ImGui::SetNextWindowSize(ImVec2(editorWidth, editorHeight));
         ImGui::SetNextWindowPos(ImVec2((screenWidth - editorWidth) / 2, (screenHeight - editorHeight) / 2));
 
-        if (ImGui::BeginMainMenuBar()){
+        if (ImGui::BeginMainMenuBar()) {
 
-            if (ImGui::BeginMenu("File")){
+            if (ImGui::BeginMenu("File")) {
 
-                if(ImGui::BeginMenu("Options")) {
+                if (ImGui::BeginMenu("Options")) {
                     static const char* items[]{ "1280x720", "1920x1080", "2560x1440" };
                     ImGui::Combo("Resolution", &selectedItem, items, IM_ARRAYSIZE(items));
 
@@ -392,23 +393,27 @@ int WinMain()
 
                 ImGui::EndMenu();
             }
-				
+
             if (ImGui::BeginMenu("Edit")) {
-					
+
                 if (ImGui::BeginMenu("Camera Settings")) {
-					ImGui::SliderFloat("Movement Multiplier", &movementMultiplier, 0.0f, 5.0f);
-					ImGui::EndMenu();
+                    ImGui::SliderFloat("Movement Multiplier", &movementMultiplier, 0.0f, 5.0f);
+                    ImGui::EndMenu();
                 }
 
                 ImGui::EndMenu();
             }
 
             if (ImGui::BeginMenu("Scene")) {
-                static const char* scenes[]{ "Demo Scene", "Mandelbulb", "Scene Editor", "Cornell Box"};
+                static const char* scenes[]{ "Demo Scene", "Mandelbulb", "Scene Editor", "Cornell Box" };
                 ImGui::Combo("##foo", &currentScene, scenes, IM_ARRAYSIZE(scenes));
                 scene = currentScene + 1;
 
                 ImGui::EndMenu();
+            }
+
+            if (ImGui::Button("Info")) {
+                inInfoMenu = true;
             }
 
             std::string sceneText;
@@ -428,14 +433,20 @@ int WinMain()
 					break;
             }
 
-            centerText(sceneText);
+            auto sceneTextWidth = ImGui::CalcTextSize(sceneText.c_str()).x;
+
+            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - sceneTextWidth) * 0.99f);
+
+            ImGui::Text(sceneText.c_str());
+
+            centerText("OpenGL Rendering Engine");
 
             ImGui::EndMainMenuBar();
         }
 
         if (paused) {
-            ImGui::SetNextWindowPos(ImVec2(screenWidth * 0.64285, 0));
-            ImGui::SetNextWindowSize(ImVec2(screenWidth * 0.358, screenHeight));
+            ImGui::SetNextWindowPos(ImVec2(screenWidth * 0.64285, screenHeight*0.027));
+            ImGui::SetNextWindowSize(ImVec2(screenWidth * 0.358, screenHeight*0.974));
 
             if (ImGui::Begin("Parameters", nullptr, window_flags_parameters)) {
 
@@ -784,6 +795,23 @@ int WinMain()
                 }
 
                 ImGui::PopStyleVar();
+                ImGui::End();
+            }
+
+            float infoWidth = screenWidth * 0.5;
+            float infoHeight = screenHeight * 0.5;
+
+            ImGui::SetNextWindowPos(ImVec2((screenWidth - infoWidth) * 0.5, (screenHeight - infoHeight) * 0.5));
+            ImGui::SetNextWindowSize(ImVec2(infoWidth, infoHeight));
+        }
+
+        //info menu (rendered last)
+        if (inInfoMenu) {
+            if (!ImGui::Begin("Info Menu", &inInfoMenu, window_flags_info)) {
+                ImGui::End();
+            }
+            else {
+                ImGui::Text("hello");
                 ImGui::End();
             }
         }
