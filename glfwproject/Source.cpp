@@ -323,7 +323,7 @@ int WinMain()
         // ------------------------------------------------------------------------
         ImGuiWindowFlags window_flags_transparent = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus;
         ImGuiWindowFlags window_flags_adjustable = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoFocusOnAppearing;
-        ImGuiWindowFlags window_flags_parameters = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+        ImGuiWindowFlags window_flags_parameters = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoNavFocus;
         ImGuiWindowFlags window_flags_child = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus;
         ImGuiWindowFlags window_flags_editor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
         ImGuiWindowFlags window_flags_entityEditor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
@@ -459,9 +459,7 @@ int WinMain()
                 
                 if (ImGui::BeginTabBar("Parameter Tabs")) {
                     if (ImGui::BeginTabItem(" Ray Marching ")) {
-
-                        ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 2.15));
-
+						
                         rayMarching = true;
                         inEditor = false;
 
@@ -471,6 +469,8 @@ int WinMain()
                         ImGui::PushFont(font2);
                         ImGui::Text("");
                         ImGui::PopFont();
+
+                        ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 2.5));
 
                         //formatting and setting up imgui inputs for key variables
 
@@ -515,7 +515,7 @@ int WinMain()
                         if (fogEnabled) {
                             ImGui::Indent(32.0f);
                             ImGui::SliderFloat("Fog Visibility", &fogVisibility, 0.0f, 1.0f);
-							
+
                             int intFalloff = (int)falloff;
                             ImGui::SliderInt("Fog Falloff", &intFalloff, 10, 100);
                             falloff = (float)intFalloff;
@@ -807,11 +807,37 @@ int WinMain()
 
         //info menu (rendered last)
         if (inInfoMenu) {
-            if (!ImGui::Begin("Info Menu", &inInfoMenu, window_flags_info)) {
+            if (!ImGui::Begin("Info", &inInfoMenu, window_flags_info)) {
                 ImGui::End();
             }
             else {
-                ImGui::Text("hello");
+                ImGui::TextWrapped("This project is realtime OpenGL rendering engine that has support for ray marching and ray tracing rendering.");
+                ImGui::Text("");
+                ImGui::TextWrapped("The engine interface was created using Dear ImGui, along with the following libraries:");
+                ImGui::BulletText("OpenGL");
+				ImGui::BulletText("GLFW");
+				ImGui::BulletText("GLM");
+				ImGui::BulletText("stb_image");
+                ImGui::Text("");
+                ImGui::TextWrapped("The engine has support for the following features/lighting effects:");
+				ImGui::BulletText("Ray marching and Ray tracing rendering");
+				ImGui::BulletText("Ambient occlusion");
+				ImGui::BulletText("Reflections");
+				ImGui::BulletText("Anti-aliasing");
+                ImGui::BulletText("Phong lighting Model");
+				ImGui::BulletText("Fractal Rendering");
+                ImGui::BulletText("Performance-measuring utilities");
+                ImGui::BulletText("Ray marching custom scene editor");
+                ImGui::Text("");
+                ImGui::TextWrapped("The project is divided into different scenes, which can be changed in the scene tab, found in upper-left corner.");
+                ImGui::Text("");
+                ImGui::TextWrapped("For the Demo Scene & Cornell Box Scene, you can switch tabs in the parameter window to change between ray marching and ray tracing, both with according settings.");
+                ImGui::Text("");
+                ImGui::TextWrapped("When in the Mandelbulb scene, you are provided with additional settings for rendering the 3D fractal. For higher detail, lower the Min Distance value.");
+                ImGui::Text("");
+                ImGui::TextWrapped("In the Scene Editor scene, you are able to add and customize new 3D primitives in a raymarching scene, and there are two sections, one for creating a scene and the other for modifying ray marching parameters.");
+
+					
                 ImGui::End();
             }
         }
