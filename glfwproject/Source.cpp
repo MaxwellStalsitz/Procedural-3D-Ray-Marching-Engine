@@ -567,12 +567,16 @@ int WinMain()
                         if (ImGui::BeginTabItem(" Editor Settings ")){
                             inEditor = true;
 
-                            ImGui::Text("");
-
                             ImGui::SetNextItemOpen(true);
 
+                            ImGui::Separator();
+                            ImGui::Text("Scene Hierarchy");
+                            ImGui::Separator();
+
+                            ImGui::BeginChild("Scene Heirarchy Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 6));
+
                             //rendering heirarchy system through imgui
-                            if (ImGui::TreeNode("Scene Heirarchy"))
+                            if (ImGui::TreeNode("Entities:"))
                             {
                                 ImGuiTreeNodeFlags node_flags = window_flags_parameters;
 
@@ -587,9 +591,17 @@ int WinMain()
 
                                 ImGui::TreePop();
                             }
+                            ImGui::EndChild();
+
+                            ImGui::Text("");
+
+                            ImGui::Separator();
+                            ImGui::Text("Entity Editing");
+                            ImGui::Separator();
+
+                            ImGui::BeginChild("Entity Editing", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 8));
 
                             if (node_clicked != -1) {
-                                ImGui::Text("");
                                 glm::vec3 position = sceneArray[node_clicked].position;
                                 ImGui::InputFloat3("Position", &position.x);
                                 sceneArray[node_clicked].position = position;
@@ -600,6 +612,14 @@ int WinMain()
                                     node_clicked = -1;
                                 }
                             }
+                            else {
+                                ImGui::Text("");
+                                ImGui::Text("");
+
+                                centerText("No Entity Selected");
+                            }
+
+                            ImGui::EndChild();
 
                             ImGui::Separator();
                             ImGui::Text("Add Entity");
@@ -609,7 +629,7 @@ int WinMain()
 
                             centerText(" Entity Name ");
 
-                            ImGui::PushItemWidth(screenWidth/2.85);
+                            ImGui::PushItemWidth(screenWidth / 2.85);
                             ImGui::InputText(" ", entityName, IM_ARRAYSIZE(entityName));
                             ImGui::PopItemWidth();
 
@@ -630,14 +650,14 @@ int WinMain()
                             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - materialTextWidth) * 0.075f);
                             ImGui::Text(materialColorText.c_str());
 
-                            static ImVec4 color = ImVec4(0.5f, 0.5f, 0.5f,1.0f);
+                            static ImVec4 color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
                             static ImVec4 backup_color;
 
                             //
                             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 50) * 0.15f);
                             //
 
-                            if (ImGui::ColorButton("Material Color", color, window_flags_editor, ImVec2(50,50))) {
+                            if (ImGui::ColorButton("Material Color", color, window_flags_editor, ImVec2(50, 50))) {
                                 ImGui::OpenPopup("Color Picker");
                                 backup_color = color;
                             }
