@@ -573,9 +573,10 @@ int WinMain()
                             ImGui::Text("Scene Hierarchy");
                             ImGui::Separator();
 
-                            ImGui::BeginChild("Scene Heirarchy Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 6));
+                            ImGui::BeginChild("Scene Heirarchy Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 7.5));
 
                             //rendering heirarchy system through imgui
+                            ImGui::SetNextItemOpen(true);
                             if (ImGui::TreeNode("Entities:"))
                             {
                                 ImGuiTreeNodeFlags node_flags = window_flags_parameters;
@@ -583,7 +584,7 @@ int WinMain()
                                 node_flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen; // ImGuiTreeNodeFlags_Bullet
                                 
                                 for (int i = 0; i < numberOfEntities; i++) {
-                                    std::string nodeName = sceneArray[i].name;
+                                    std::string nodeName = " " + sceneArray[i].name;
                                     ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, nodeName.c_str(), i);
                                     if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
                                         node_clicked = i;
