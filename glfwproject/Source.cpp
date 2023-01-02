@@ -295,6 +295,13 @@ int WinMain()
                 rayMarchingShader.setVec3(name, sceneArray[i].position);
                 ss.str("");
 
+                ss << "objectScale[" << i << "]";
+                str = ss.str();
+                name = str.c_str();
+
+                rayMarchingShader.setVec3(name, sceneArray[i].scale);
+                ss.str("");
+
                 ss << "primitives[" << i << "]";
                 str = ss.str();
                 name = str.c_str();
