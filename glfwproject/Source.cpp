@@ -138,9 +138,10 @@ int WinMain()
 	// imgui initialization and customizing the color scheme
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImFont* font1 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 24.0f, NULL);
-    ImFont* font2 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 12.0f, NULL);
-    ImFont* font3 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 36.0f, NULL);
+    ImFont* font1 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 24.0f, NULL); // normal font
+    ImFont* font2 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 12.0f, NULL); // smaller font
+    ImFont* font3 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 36.0f, NULL); // larger font
+    ImFont* font4 = io.Fonts->AddFontFromFileTTF("fonts/mainfont.ttf", 6.0f, NULL); // smallest font
 
     // ------------------------------------------------------------------------
 
@@ -292,7 +293,17 @@ int WinMain()
                 name = str.c_str();
 
                 rayMarchingShader.setVec3(name, sceneArray[i].position);
+                ss.str("");
+
+                ss << "primitives[" << i << "]";
+                str = ss.str();
+                name = str.c_str();
+
+                rayMarchingShader.setInt(name, sceneArray[i].shape);
+                ss.str("");
             }
+            
+            rayMarchingShader.setInt("primitive", primitiveSelected);
         }
         else {
             //ray tracing variables
@@ -573,7 +584,7 @@ int WinMain()
                             ImGui::Text("Scene Hierarchy");
                             ImGui::Separator();
 
-                            ImGui::BeginChild("Scene Heirarchy Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 7.5));
+                            ImGui::BeginChild("Scene Heirarchy Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 2.75));
 
                             //rendering heirarchy system through imgui
                             ImGui::SetNextItemOpen(true);
@@ -638,10 +649,7 @@ int WinMain()
                             ImGui::InputFloat3(" Entity Rotation", &editorRotation.x);
                             ImGui::InputFloat3(" Entity Scale", &editorScale.x);
 
-                            // ------------------------------------------------------------------------
-                            //imgui color picker for material, code from imgui demo scene
-
-                            ImGui::PushFont(font2);
+                            ImGui::PushFont(font4);
                             ImGui::Text("");
                             ImGui::PopFont();
 
@@ -651,11 +659,49 @@ int WinMain()
                             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - materialTextWidth) * 0.075f);
                             ImGui::Text(materialColorText.c_str());
 
+
+                            ImGui::SameLine();
+
+                            ImGui::PushFont(font3); // larger font size
+                            std::string addText = " Create Entity ";
+                            auto textWidth = ImGui::CalcTextSize(addText.c_str()).x;
+                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 1.25);
+
+                            if (ImGui::Button(addText.c_str()) && !(entityName[0] == '\0')) {
+                                sceneObject entity;
+                                entity.name = entityName;
+                                entity.position = editorPosition;
+                                entity.rotation = editorRotation;
+                                entity.scale = editorScale;
+                                entity.shape = primitiveSelected;
+
+                                if (numberOfEntities < 25) {
+                                    sceneArray[numberOfEntities] = entity;
+                                    numberOfEntities++;
+                                }
+
+                                sceneEditor = false;
+                            }
+
+                            ImGui::PopFont();
+
+                            // ------------------------------------------------------------------------
+                            //drop down for selecting entity shape
+
+                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 1.25);
+
+                            static const char* primitives[]{ "Sphere", "Box", "Torus", "Octahedron", "Round Box", "Box Frame" };
+                            ImGui::SetNextItemWidth(screenHeight * 0.285);
+                            ImGui::Combo("##foo", &primitiveSelected, primitives, IM_ARRAYSIZE(primitives));
+
+                            // ------------------------------------------------------------------------
+                            //imgui color picker for material, code from imgui demo scene
                             static ImVec4 color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
                             static ImVec4 backup_color;
 
                             //
                             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 50) * 0.15f);
+                            ImGui::SetCursorPosY((ImGui::GetWindowHeight() - 50) * 0.945);
                             //
 
                             if (ImGui::ColorButton("Material Color", color, window_flags_editor, ImVec2(50, 50))) {
@@ -672,32 +718,6 @@ int WinMain()
 
                                 ImGui::EndPopup();
                             }
-
-                            // ------------------------------------------------------------------------
-                            ImGui::SameLine();
-
-                            ImGui::PushFont(font3); // larger font size
-
-                            std::string addText = " Create Entity ";
-                            auto textWidth = ImGui::CalcTextSize(addText.c_str()).x;
-                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 1.25);
-
-                            if (ImGui::Button(addText.c_str()) && !(entityName[0] == '\0')) {
-                                sceneObject entity;
-                                entity.name = entityName;
-                                entity.position = editorPosition;
-                                entity.rotation = editorRotation;
-                                entity.scale = editorScale;
-
-                                if (numberOfEntities < 25) {
-                                    sceneArray[numberOfEntities] = entity;
-                                    numberOfEntities++;
-                                }
-
-                                sceneEditor = false;
-                            }
-
-                            ImGui::PopFont();
 
                             ImGui::EndTabItem();
                         }
@@ -737,6 +757,7 @@ int WinMain()
 
                 // ------------------------------------------------------------------------
 
+                if (!inEditor) {
                 ImGui::PushFont(font2); // smaller font size
                 ImGui::Text("");
                 ImGui::PopFont();
@@ -769,49 +790,46 @@ int WinMain()
                 char overlay2[32];
                 sprintf_s(overlay2, "Average: %f", average2);
 
-                if (ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35, screenHeight / 3), false, window_flags_child)) {
-
-                	centerText("Frame Rate (FPS)");
-                    ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0.0f, 1000.0f, ImVec2(screenWidth * 0.35, 350.0f));
-
-                    centerText("Milliseconds Per Frame");
-                	ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, 0.0f, 100.0f, ImVec2(screenWidth * 0.35, 330.0f));
-
-                    ImGui::EndChild();
-                }
                 
-                // ------------------------------------------------------------------------
+                ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35, screenHeight / 3), false, window_flags_child);
+
+                centerText("Frame Rate (FPS)");
+                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0.0f, 1000.0f, ImVec2(screenWidth * 0.35, 350.0f));
+
+                centerText("Milliseconds Per Frame");
+                ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, 0.0f, 100.0f, ImVec2(screenWidth * 0.35, 330.0f));
+
+                ImGui::EndChild();
 
                 ImGui::PushFont(font2);
                 ImGui::Text("");
                 ImGui::PopFont();
                 ImGui::Separator();
 
-                if (!inEditor) {
-                    std::string resetText = " Reset to Defaults ";
-                    auto resetTextWidth = ImGui::CalcTextSize(resetText.c_str()).x;
-                    ImGui::SetCursorPosX((ImGui::GetWindowWidth() - resetTextWidth) / 2);
+                std::string resetText = " Reset to Defaults ";
+                auto resetTextWidth = ImGui::CalcTextSize(resetText.c_str()).x;
+                ImGui::SetCursorPosX((ImGui::GetWindowWidth() - resetTextWidth) / 2);
 
-                    //reset to defaults button
-                    if (ImGui::Button(resetText.c_str())) {
-                        MAX_STEPS = 325;
-                        MAX_DIST = 500.0f;
-                        MIN_DIST = 0.02;
-                        antiAliasing = false;
-                        useLighting = true;
-                        ambientOcclusion = true;
-                        occlusionSamples = 8;
-                        power = 8;
-                        iterations = 8;
-                        animate = true;
-                        timeMultiplier = 1.0f;
-                        reflections = false;
-                        reflectionVisibility = 0.5f;
-                        fogEnabled = true;
-                        fogVisibility = 1.0f;
-                        lightPosition = glm::vec3(0, 2, 0);
-                    }
-                    ImGui::Separator();
+                //reset to defaults button
+                if (ImGui::Button(resetText.c_str())) {
+                    MAX_STEPS = 325;
+                    MAX_DIST = 500.0f;
+                    MIN_DIST = 0.02;
+                    antiAliasing = false;
+                    useLighting = true;
+                    ambientOcclusion = true;
+                    occlusionSamples = 8;
+                    power = 8;
+                    iterations = 8;
+                    animate = true;
+                    timeMultiplier = 1.0f;
+                    reflections = false;
+                    reflectionVisibility = 0.5f;
+                    fogEnabled = true;
+                    fogVisibility = 1.0f;
+                    lightPosition = glm::vec3(0, 2, 0);
+                }
+                ImGui::Separator();
 
                 }
 

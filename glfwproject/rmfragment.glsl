@@ -28,6 +28,7 @@ uniform int scene;
 uniform int numberOfObjects;
 uniform vec3 objectPositions[25];
 uniform vec3 objectScale[25];
+uniform int primitives[25];
 
 uniform float power;
 uniform int iterations;
@@ -118,6 +119,33 @@ float sdOctahedron( vec3 p, float s)
 //----------------------------------------------------------------------
 //map functions
 
+float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale){
+	float dist;
+
+	switch(primitive){
+		case(0):
+			dist = sdSphere(rayPosition-position, 1);
+			break;
+		case(1):
+			dist = sdBox(rayPosition-position, scale);
+			break;
+		case(2):
+			dist = sdTorus(rayPosition-position, vec2(0.75,0.15));
+			break;
+		case(3):
+			dist = sdOctahedron(rayPosition-position, 1);
+			break;
+		case(4):
+			dist = sdRoundBox(rayPosition-position, scale, 0.5);
+			break;
+		case(5):
+			dist = sdBoxFrame(rayPosition-position, scale, 0.05);
+			break;
+	}
+
+	return dist;
+}
+
 vec2 customScene(vec3 rayPosition){
 	float distanceToSDF;
 	vec2 result;
@@ -136,8 +164,10 @@ vec2 customScene(vec3 rayPosition){
 	for (int i = 0; i < numberOfObjects; i++){
 		ID = 1.0;
 		vec3 position = objectPositions[i];
+		vec3 scale = objectScale[i];
 		float sphereRadius = 1;
-		distanceToSDF = sdSphere(rayPosition-position, sphereRadius);
+		//distanceToSDF = sdSphere(rayPosition-position, sphereRadius);
+		distanceToSDF = customDistance(primitives[i], rayPosition, position, scale);
 		vec2 sphere1 = vec2(distanceToSDF, ID);
 
 		result = mergeResults(result, sphere1);
@@ -153,7 +183,6 @@ vec3 rotateX(vec3 p, float a) {
 vec3 rotateY(vec3 p, float a) {
     return vec3(cos(a) * p.x + sin(a) * p.z, p.y, -sin(a) * p.x + cos(a) * p.z);
 }
-
 
 vec2 demoScene(vec3 pos)
 {
@@ -188,7 +217,6 @@ vec2 demoScene(vec3 pos)
 }
 
 vec2 manyEntityScene(vec3 pos){
-	
 	vec2 result;
 
 	float ID, distanceToSDF;
@@ -525,7 +553,7 @@ vec3 render(vec2 uv)
 			sceneColor = getMaterial(rayOrigin, t.y);
 
 			if (fogEnabled){
-				float fog = smoothstep(4.0, 50.0, t.x);
+				float fog = smoothstep(4.0, falloff, t.x);
 				sceneColor = mix(sceneColor, background, fog);
 			}
 		}

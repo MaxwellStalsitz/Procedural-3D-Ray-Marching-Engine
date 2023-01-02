@@ -83,6 +83,7 @@ const float gravity = -50.f;
 // ------------------------------------------------------------------------
 int numberOfEntities = 0;
 int node_clicked = -1;
+int primitiveSelected = 0;
 
 glm::vec3 editorPosition = glm::vec3(0.0f);
 glm::vec3 editorRotation = glm::vec3(0.0f);
