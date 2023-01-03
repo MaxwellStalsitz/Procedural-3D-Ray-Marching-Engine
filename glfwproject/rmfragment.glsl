@@ -161,18 +161,21 @@ vec2 customScene(vec3 rayPosition, inout vec3 material){
 	distanceToSDF = planeDistance;
 	vec2 plane = vec2(distanceToSDF, ID);
 	result = plane;
+	vec3 oldMaterial;
 
 	for (int i = 0; i < numberOfObjects; i++){
 		ID = 0.0;
-		material = objectColors[i];
 		vec3 position = objectPositions[i];
 		vec3 scale = objectScale[i];
 		float sphereRadius = 1;
-		//distanceToSDF = sdSphere(rayPosition-position, sphereRadius);
 		distanceToSDF = customDistance(primitives[i], rayPosition, position, scale);
-		vec2 sphere1 = vec2(distanceToSDF, ID);
+		vec2 newPrimitive = vec2(distanceToSDF, ID);
 
-		result = mergeResults(result, sphere1);
+		if (result.x > newPrimitive.x){
+			material = objectColors[i];
+		}
+
+		result = mergeResults(result, newPrimitive);
 	}
 	
 	return result;
