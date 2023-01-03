@@ -287,6 +287,7 @@ int WinMain()
 
             for (int i = 0; i < numberOfEntities; ++i)
             {
+
                 std::stringstream ss;
                 ss << "objectPositions[" << i << "]";
                 std::string str = ss.str();
@@ -317,8 +318,7 @@ int WinMain()
                 ss.str("");
             }
             
-            rayMarchingShader.setInt("primitive", primitiveSelected);
-        }
+            rayMarchingShader.setInt("primitive", primitiveSelected);        }
         else {
             //ray tracing variables
 

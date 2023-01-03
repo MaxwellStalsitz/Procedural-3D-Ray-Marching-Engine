@@ -28,6 +28,7 @@ uniform int scene;
 uniform int numberOfObjects;
 uniform vec3 objectPositions[25];
 uniform vec3 objectScale[25];
+
 uniform vec3 objectColors[25];
 uniform int primitives[25];
 
@@ -45,6 +46,12 @@ uniform float fogVisibility;
 uniform float falloff;
 
 #define PI 3.1415926535897932384626433832795
+
+#define GRAY 1;
+#define TILE 2;
+#define RED 3;
+#define GREEN 4;
+#define BLUE 5;
 
 //----------------------------------------------------------------------
 vec3 background;
@@ -124,7 +131,7 @@ float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale)
 	float dist;
 
 	switch(primitive){
-		case(0):
+		case(0): 
 			dist = sdSphere(rayPosition-position, 1);
 			break;
 		case(1):
@@ -155,16 +162,15 @@ vec2 customScene(vec3 rayPosition, inout vec3 material){
 	float ID;
 
 	//infinite plane
-	ID = 2.0;
+	ID = TILE;
 	float planeHeight = 1.0;
 	float planeDistance = rayPosition.y + planeHeight;
 	distanceToSDF = planeDistance;
 	vec2 plane = vec2(distanceToSDF, ID);
 	result = plane;
-	vec3 oldMaterial;
 
 	for (int i = 0; i < numberOfObjects; i++){
-		ID = 0.0;
+		ID = 0.0; //custom
 		vec3 position = objectPositions[i];
 		vec3 scale = objectScale[i];
 		float sphereRadius = 1;
@@ -193,22 +199,22 @@ vec2 demoScene(vec3 pos)
 {
 	float distanceToSDF;
 
-	float ID = 4.0;
+	float ID = GREEN;
 	vec3 position = vec3(-.5,0.0,-6);
 	distanceToSDF = sdTorus(rotateX(pos-position, 90.0 * PI / 180.0), vec2(0.75,0.15));
 	vec2 sphere1 = vec2(distanceToSDF, ID);
 
-	ID = 5.0;
+	ID = BLUE;
 	position = vec3(2, 0, -3);
 	distanceToSDF = sdOctahedron(pos-position, 1);
 	vec2 sphere2 = vec2(distanceToSDF, ID);
 
-	ID = 3.0;
+	ID = RED;
 	position = vec3(-3.0, -0.25, -3.0);
 	distanceToSDF = sdBoxFrame(pos-position, vec3(0.75, 0.75, 0.75), 0.05);
 	vec2 box = vec2(distanceToSDF, ID);
 	
-	ID = 2.0;
+	ID = TILE;
 	float planeDistance = pos.y + 1.0;
 	distanceToSDF = planeDistance;
 	vec2 plane = vec2(distanceToSDF, ID);
@@ -226,7 +232,7 @@ vec2 manyEntityScene(vec3 pos){
 
 	float ID, distanceToSDF;
 
-	ID = 2.0;
+	ID = TILE;
 	float planeHeight = 1.0;
 	float planeDistance = pos.y + planeHeight;
 	distanceToSDF = planeDistance;
@@ -326,14 +332,20 @@ vec2 map(vec3 rayPosition, inout vec3 material) //with custom scene material
 {
 	vec2 result;
 
-	if (scene == 1)
-		result = demoScene(rayPosition);
-	else if (scene == 2)
-		result = mandelbulb(rayPosition);
-	else if (scene == 3)
-		result = customScene(rayPosition, material);
-	else if (scene == 4)
-		result = cornellBox(rayPosition);
+	switch(scene){
+		case (1):
+			result = demoScene(rayPosition);
+			break;
+		case(2):
+			result = mandelbulb(rayPosition);
+			break;
+		case(3):
+			result = customScene(rayPosition, material);
+			break;
+		case(4):
+			result = cornellBox(rayPosition);
+			break;
+	}
 	
 	return result;
 }
@@ -343,40 +355,45 @@ vec2 map(vec3 rayPosition) //without custom scene material
 	vec2 result;
 	vec3 material;
 
-	if (scene == 1)
-		result = demoScene(rayPosition);
-	else if (scene == 2)
-		result = mandelbulb(rayPosition);
-	else if (scene == 3)
-		result = customScene(rayPosition, material);
-	else if (scene == 4)
-		result = cornellBox(rayPosition);
-	
+	switch(scene){
+		case (1):
+			result = demoScene(rayPosition);
+			break;
+		case(2):
+			result = mandelbulb(rayPosition);
+			break;
+		case(3):
+			result = customScene(rayPosition, material);
+			break;
+		case(4):
+			result = cornellBox(rayPosition);
+			break;
+	}
+
 	return result;
 }
 
 //----------------------------------------------------------------------
-
-int colorIteration = 0;
 
 //getting material from material id
 vec3 getMaterial(vec3 p, float id) 
 {
     vec3 m;
 
-	if (id == 1.0)
+	if (id == 1.0) // gray
 		m = vec3(1.0, 1.0, 1.0);
-	else if (id == 2.0)
+	else if (id == 2.0) // tile
 		m = mix(vec3(0.0 + 1.0 * mod(floor(p.x) + floor(p.z), 2.0)), vec3(0.773, 0.725, 0.627), 0.5); //from inigo quilez
 	else if (id == 3.0)
-		m = vec3(0.61, 0.176, 0.176);
+		m = vec3(0.61, 0.176, 0.176); // red
 	else if (id == 4.0)
-		m = vec3(0.49, 0.74, 0.4);
+		m = vec3(0.49, 0.74, 0.4); // green
 	else if (id == 5.0)
-		m = vec3(0.247, 0.427, 0.819);
+		m = vec3(0.247, 0.427, 0.819); // blue
 
     return m;
 }
+
 //calculating ambient occlusion
 float getOcclusion(vec3 pos, vec3 normal)
 {
@@ -598,7 +615,7 @@ void main()
 {
 	vec3 col;
 
-	//optional anti aliasing, using 4 samples per pixel
+	//optional anti aliasing, using 4 samples per pixel, essentially scaling the visuals by 4 (much more performance intensive)
 	if (antiAliasing){
 		col += render(getUV(vec2(0.125, -0.375)));
 		col += render(getUV(vec2(-0.125, 0.375)));
