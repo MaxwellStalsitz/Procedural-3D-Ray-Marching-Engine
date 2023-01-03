@@ -578,6 +578,9 @@ vec3 render(vec2 uv)
 		else{
 			sceneColor = getMaterial(rayOrigin, t.y);
 
+			if (t.y == 0.0) 
+				sceneColor = customMaterial;
+
 			if (fogEnabled){
 				float fog = smoothstep(4.0, falloff, t.x);
 				sceneColor = mix(sceneColor, background, fog);
