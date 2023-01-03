@@ -318,7 +318,8 @@ int WinMain()
                 ss.str("");
             }
             
-            rayMarchingShader.setInt("primitive", primitiveSelected);        }
+            rayMarchingShader.setInt("primitive", primitiveSelected);        
+        }
         else {
             //ray tracing variables
 

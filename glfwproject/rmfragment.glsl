@@ -419,12 +419,15 @@ mat3 getCam(vec3 rayOrigin)
 //calculating normals
 vec3 calcNormal(vec3 position)
 {
-	vec2 e = vec2(1.0, -1.0) * 0.0005;
-	return normalize(
-		e.xyy * map(position + e.xyy).x +
-		e.yyx * map(position + e.yyx).x +
-		e.yxy * map(position + e.yxy).x +
-		e.xxx * map(position + e.xxx).x);
+	float dist = map(position).x;
+
+	//we use map.x in order to only get the distance instead of a vec2 with a material id
+
+	return normalize(vec3(
+		(map(vec3(position.x + 0.0001, position.y, position.z)) - dist).x,
+		(map(vec3(position.x, position.y + 0.0001, position.z)) - dist).x,
+		(map(vec3(position.x, position.y, position.z + 0.0001)) - dist).x)
+	);
 }
 
 //soft shadow function (https://iquilezles.org/articles/rmshadows/)
@@ -467,9 +470,8 @@ vec2 rayMarch(vec3 ro, vec3 rd, inout vec3 material){
             return vec2(t, id);
 		}
 
-		if (abs(m.x) >= MAX_DIST){
+		if (abs(m.x) >= MAX_DIST)
 			break;
-		}
 
         t += m.x;
     }
