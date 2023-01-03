@@ -83,6 +83,10 @@ const float gravity = -50.f;
 // ------------------------------------------------------------------------
 int numberOfEntities = 0;
 int node_clicked = -1;
+
+static ImVec4 color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+static ImVec4 backup_color;
+
 int primitiveSelected = 0;
 
 glm::vec3 editorPosition = glm::vec3(0.0f);
@@ -97,6 +101,7 @@ class sceneObject {
         glm::vec3 position;
         glm::vec3 scale;
         glm::vec3 rotation;
+        glm::vec3 color;
 };
 
 std::vector<sceneObject> sceneArray(25);

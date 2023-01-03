@@ -308,6 +308,13 @@ int WinMain()
 
                 rayMarchingShader.setInt(name, sceneArray[i].shape);
                 ss.str("");
+
+                ss << "objectColors[" << i << "]";
+                str = ss.str();
+                name = str.c_str();
+
+                rayMarchingShader.setVec3(name, sceneArray[i].color);
+                ss.str("");
             }
             
             rayMarchingShader.setInt("primitive", primitiveSelected);
@@ -681,6 +688,7 @@ int WinMain()
                                 entity.rotation = editorRotation;
                                 entity.scale = editorScale;
                                 entity.shape = primitiveSelected;
+                                entity.color = glm::vec3(color.x, color.y, color.z);
 
                                 if (numberOfEntities < 25) {
                                     sceneArray[numberOfEntities] = entity;
@@ -703,8 +711,6 @@ int WinMain()
 
                             // ------------------------------------------------------------------------
                             //imgui color picker for material, code from imgui demo scene
-                            static ImVec4 color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
-                            static ImVec4 backup_color;
 
                             //
                             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 50) * 0.15f);

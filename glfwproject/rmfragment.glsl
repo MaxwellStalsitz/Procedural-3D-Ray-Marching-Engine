@@ -28,6 +28,7 @@ uniform int scene;
 uniform int numberOfObjects;
 uniform vec3 objectPositions[25];
 uniform vec3 objectScale[25];
+uniform vec3 objectColors[25];
 uniform int primitives[25];
 
 uniform float power;
@@ -146,7 +147,7 @@ float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale)
 	return dist;
 }
 
-vec2 customScene(vec3 rayPosition){
+vec2 customScene(vec3 rayPosition, inout vec3 material){
 	float distanceToSDF;
 	vec2 result;
 
@@ -162,7 +163,8 @@ vec2 customScene(vec3 rayPosition){
 	result = plane;
 
 	for (int i = 0; i < numberOfObjects; i++){
-		ID = 1.0;
+		ID = 0.0;
+		material = objectColors[i];
 		vec3 position = objectPositions[i];
 		vec3 scale = objectScale[i];
 		float sphereRadius = 1;
@@ -317,7 +319,7 @@ vec2 mandelbulb(vec3 pos)
 }
 
 //choosing map function based on scene
-vec2 map(vec3 rayPosition)
+vec2 map(vec3 rayPosition, inout vec3 material) //with custom scene material
 {
 	vec2 result;
 
@@ -326,7 +328,24 @@ vec2 map(vec3 rayPosition)
 	else if (scene == 2)
 		result = mandelbulb(rayPosition);
 	else if (scene == 3)
-		result = customScene(rayPosition);
+		result = customScene(rayPosition, material);
+	else if (scene == 4)
+		result = cornellBox(rayPosition);
+	
+	return result;
+}
+
+vec2 map(vec3 rayPosition) //without custom scene material
+{
+	vec2 result;
+	vec3 material;
+
+	if (scene == 1)
+		result = demoScene(rayPosition);
+	else if (scene == 2)
+		result = mandelbulb(rayPosition);
+	else if (scene == 3)
+		result = customScene(rayPosition, material);
 	else if (scene == 4)
 		result = cornellBox(rayPosition);
 	
@@ -342,9 +361,7 @@ vec3 getMaterial(vec3 p, float id)
 {
     vec3 m;
 
-	if (id == 0.0)
-		id = 0.0; //custom material
-	else if (id == 1.0)
+	if (id == 1.0)
 		m = vec3(1.0, 1.0, 1.0);
 	else if (id == 2.0)
 		m = mix(vec3(0.0 + 1.0 * mod(floor(p.x) + floor(p.z), 2.0)), vec3(0.773, 0.725, 0.627), 0.5); //from inigo quilez
@@ -357,7 +374,6 @@ vec3 getMaterial(vec3 p, float id)
 
     return m;
 }
-
 //calculating ambient occlusion
 float getOcclusion(vec3 pos, vec3 normal)
 {
@@ -418,13 +434,13 @@ vec2 getUV(vec2 offset){
 }
 
 //ray marching pass for calculating standard and reflection values
-vec2 rayMarch(vec3 ro, vec3 rd){
+vec2 rayMarch(vec3 ro, vec3 rd, inout vec3 material){
     float t = 0.0; //total distance travelled
 	float id;
 	
     for(int i = 0; i < MAX_STEPS; i++) {
         vec3 pos = ro + t * rd; // hit point
-        vec2 m = map(pos);
+        vec2 m = map(pos, material);
 		
         if(m.x < MIN_DIST){
 			id = m.y;
@@ -442,7 +458,7 @@ vec2 rayMarch(vec3 ro, vec3 rd){
 }
 
 //color function, using phong lighting model and all other effects
-vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t){
+vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t, vec3 customMaterial){
 	vec3 col;
 	
 	vec3 normal = calcNormal(rayOrigin);
@@ -460,7 +476,13 @@ vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t){
 	vec3 specularColor = vec3(0.5);
 	float specularPower = 10.0;
 	vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower);
-	vec3 material = getMaterial(rayOrigin, t.y);
+
+	vec3 material;
+
+	if (t.y != 0)
+		material = getMaterial(rayOrigin, t.y);
+	else
+		material = customMaterial;
 
 	float diffuse;
 	diffuse = clamp(dot(normal, normalize(lp - rayOrigin)), 0.0, 1.0);
@@ -522,7 +544,8 @@ vec3 render(vec2 uv)
 	}
 
 	vec2 t;
-	t = rayMarch(rayOrigin, rayDirection);
+	vec3 customMaterial;
+	t = rayMarch(rayOrigin, rayDirection, customMaterial);
 
 	rayOrigin += rayDirection * t.x;
 
@@ -532,19 +555,19 @@ vec3 render(vec2 uv)
 		if (useLighting){
 
 			//phong lighting (with gamma correction)
-			sceneColor = calcColor(rayOrigin, rayDirection, t);
+			sceneColor = calcColor(rayOrigin, rayDirection, t, customMaterial);
 
 			if (reflections){
 				rayDirection = reflect(rayDirection, calcNormal(rayOrigin));
 
-				t = rayMarch(rayOrigin + rayDirection * MIN_DIST, rayDirection);
+				t = rayMarch(rayOrigin + rayDirection * MIN_DIST, rayDirection, customMaterial);
 				
 				rayOrigin += rayDirection * t.x;
 
 				if (rayOrigin.y > -0.99 && t.y == -1.0)
 					sceneColor += background * reflectionVisibility;
 				else{
-					sceneColor += calcColor(rayOrigin, rayDirection, t) * reflectionVisibility;
+					sceneColor += calcColor(rayOrigin, rayDirection, t, customMaterial) * reflectionVisibility;
 				}
 					
 			}
