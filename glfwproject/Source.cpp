@@ -639,6 +639,14 @@ int WinMain()
                                 ImGui::InputFloat3("Position", &position.x);
                                 sceneArray[node_clicked].position = position;
 
+                                glm::vec3 rotation = sceneArray[node_clicked].rotation;
+                                ImGui::DragFloat3("Rotation", &rotation.x, 1.0f, 0.0f, 360.0f);
+                                sceneArray[node_clicked].rotation = rotation;
+
+                                glm::vec3 scale = sceneArray[node_clicked].scale;
+                                ImGui::InputFloat3("Scale", &scale.x);
+                                sceneArray[node_clicked].scale = scale;
+
                                 if (ImGui::Button("Delete")) { //delete entity
                                     sceneArray = removeElement(sceneArray, node_clicked);
                                     numberOfEntities--;			
@@ -679,7 +687,6 @@ int WinMain()
 
                             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - materialTextWidth) * 0.075f);
                             ImGui::Text(materialColorText.c_str());
-
 
                             ImGui::SameLine();
 
