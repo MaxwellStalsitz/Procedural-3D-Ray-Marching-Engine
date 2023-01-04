@@ -171,19 +171,19 @@ float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale,
 			dist = sdSphere(rayPosition, 1);
 			break;
 		case(1):
-			dist = sdBox(rayPosition-position, vec3(1));
+			dist = sdBox(rayPosition, vec3(1));
 			break;
 		case(2):
-			dist = sdTorus(rayPosition-position, vec2(0.75,0.15));
+			dist = sdTorus(rayPosition, vec2(0.75,0.15));
 			break;
 		case(3):
-			dist = sdOctahedron(rayPosition-position, 1);
+			dist = sdOctahedron(rayPosition, 1);
 			break;
 		case(4):
-			dist = sdRoundBox(rayPosition-position, vec3(1), 0.5);
+			dist = sdRoundBox(rayPosition, vec3(1), 0.5);
 			break;
 		case(5):
-			dist = sdBoxFrame(rayPosition-position, vec3(1), 0.05);
+			dist = sdBoxFrame(rayPosition, vec3(1), 0.05);
 			break;
 	}
 
