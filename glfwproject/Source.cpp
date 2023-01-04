@@ -287,7 +287,6 @@ int WinMain()
 
             for (int i = 0; i < numberOfEntities; ++i)
             {
-
                 std::stringstream ss;
                 ss << "objectPositions[" << i << "]";
                 std::string str = ss.str();
@@ -315,6 +314,13 @@ int WinMain()
                 name = str.c_str();
 
                 rayMarchingShader.setVec3(name, sceneArray[i].color);
+                ss.str("");
+
+                ss << "objectRotations[" << i << "]";
+                str = ss.str();
+                name = str.c_str();
+
+                rayMarchingShader.setVec3(name, sceneArray[i].rotation);
                 ss.str("");
             }
             
@@ -890,7 +896,6 @@ int WinMain()
                 ImGui::Text("");
                 ImGui::TextWrapped("In the Scene Editor scene, you are able to add and customize new 3D primitives in a raymarching scene, and there are two sections, one for creating a scene and the other for modifying ray marching parameters.");
 
-					
                 ImGui::End();
             }
         }

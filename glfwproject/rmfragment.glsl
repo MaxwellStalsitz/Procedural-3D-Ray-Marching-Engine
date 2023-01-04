@@ -28,6 +28,7 @@ uniform int scene;
 uniform int numberOfObjects;
 uniform vec3 objectPositions[25];
 uniform vec3 objectScale[25];
+uniform vec3 objectRotations[25];
 
 uniform vec3 objectColors[25];
 uniform int primitives[25];
@@ -127,15 +128,50 @@ float sdOctahedron( vec3 p, float s)
 //----------------------------------------------------------------------
 //map functions
 
-float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale){
+vec3 rotateX(vec3 p, float a) {
+    return vec3(p.x, cos(a) * p.y - sin(a) * p.z, sin(a) * p.y + cos(a) * p.z);
+}
+    
+vec3 rotateY(vec3 p, float a) {
+    return vec3(cos(a) * p.x + sin(a) * p.z, p.y, -sin(a) * p.x + cos(a) * p.z);
+}
+
+float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale, vec3 rotation){
 	float dist;
+
+	mat4 scaleMatrix = mat4(
+		vec4(scale.x, 0, 0, 0),
+		vec4(0, scale.y, 0, 0),
+		vec4(0, 0, scale.z, 0),
+		vec4(0, 0, 0, 1)
+	);
+
+	float x = rotation.x * PI / 180.0;
+    float y = rotation.y * PI / 180.0;
+    float z = rotation.z * PI / 180.0;
+	
+    mat4 rotationMatrix = mat4(
+		vec4(cos(y) * cos(z), -cos(y) * sin(z), sin(y), 0),
+		vec4(cos(x) * sin(z) + sin(x) * sin(y) * cos(z), cos(x) * cos(z) - sin(x) * sin(y) * sin(z), -sin(x) * cos(y), 0),
+		vec4(sin(x) * sin(z) - cos(x) * sin(y) * cos(z), sin(x) * cos(z) + cos(x) * sin(y) * sin(z), cos(x) * cos(y), 0),
+		vec4(0, 0, 0, 1)
+	);
+
+	mat4 translationMatrix = mat4(
+		vec4(1, 0, 0, position.x),
+		vec4(0, 1, 0, position.y),
+		vec4(0, 0, 1, position.z),
+		vec4(0, 0, 0, 1)
+	);
+
+	rayPosition = (vec4(rayPosition, 1) * inverse(scaleMatrix * rotationMatrix * translationMatrix)).xyz;
 
 	switch(primitive){
 		case(0): 
-			dist = sdSphere(rayPosition-position, 1);
+			dist = sdSphere(rayPosition, 1);
 			break;
 		case(1):
-			dist = sdBox(rayPosition-position, scale);
+			dist = sdBox(rayPosition-position, vec3(1));
 			break;
 		case(2):
 			dist = sdTorus(rayPosition-position, vec2(0.75,0.15));
@@ -144,10 +180,10 @@ float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale)
 			dist = sdOctahedron(rayPosition-position, 1);
 			break;
 		case(4):
-			dist = sdRoundBox(rayPosition-position, scale, 0.5);
+			dist = sdRoundBox(rayPosition-position, vec3(1), 0.5);
 			break;
 		case(5):
-			dist = sdBoxFrame(rayPosition-position, scale, 0.05);
+			dist = sdBoxFrame(rayPosition-position, vec3(1), 0.05);
 			break;
 	}
 
@@ -173,8 +209,9 @@ vec2 customScene(vec3 rayPosition, inout vec3 material){
 		ID = 0.0; //custom
 		vec3 position = objectPositions[i];
 		vec3 scale = objectScale[i];
+		vec3 rotation = objectRotations[i];
 		float sphereRadius = 1;
-		distanceToSDF = customDistance(primitives[i], rayPosition, position, scale);
+		distanceToSDF = customDistance(primitives[i], rayPosition, position, scale, rotation);
 		vec2 newPrimitive = vec2(distanceToSDF, ID);
 
 		if (result.x > newPrimitive.x){
@@ -185,14 +222,6 @@ vec2 customScene(vec3 rayPosition, inout vec3 material){
 	}
 	
 	return result;
-}
-
-vec3 rotateX(vec3 p, float a) {
-    return vec3(p.x, cos(a) * p.y - sin(a) * p.z, sin(a) * p.y + cos(a) * p.z);
-}
-    
-vec3 rotateY(vec3 p, float a) {
-    return vec3(cos(a) * p.x + sin(a) * p.z, p.y, -sin(a) * p.x + cos(a) * p.z);
 }
 
 vec2 demoScene(vec3 pos)
