@@ -30,6 +30,8 @@ bool inEditor = false;
 static bool inInfoMenu = false;
 
 // ------------------------------------------------------------------------
+void commonParameters();
+
 bool rayMarching = true;
 
 bool useLighting = true;

@@ -515,45 +515,7 @@ int WinMain()
                         }
 
                         ImGui::Text("");
-                        ImGui::Checkbox("Anti-Aliasing (SSAA 4X)", &antiAliasing);
-                        ImGui::Text("");
-                        ImGui::Checkbox("Lighting", &useLighting);
-                        ImGui::Indent(32.0f);
-
-                        if (useLighting) {
-
-                            if (scene != 4) {
-                                ImGui::InputFloat3("Light Position", &lightPosition.x);
-                            }
-
-                            ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
-                            ImGui::Indent(32.0f);
-                            if (ambientOcclusion)
-                                ImGui::SliderInt("Samples", &occlusionSamples, 1, 50);
-                            ImGui::Unindent(32.0f);
-                            ImGui::Checkbox("Reflections", &reflections);
-                            ImGui::Indent(32.0f);
-
-                            if (reflections)
-                                ImGui::SliderFloat("Visibility", &reflectionVisibility, 0.0f, 1.0f);
-
-                            ImGui::Unindent(64.0f);
-                        }
-                        else
-                            ImGui::Indent(-32.0f);
-
-                        ImGui::Checkbox("Fog", &fogEnabled);
-
-                        if (fogEnabled) {
-                            ImGui::Indent(32.0f);
-                            ImGui::SliderFloat("Fog Visibility", &fogVisibility, 0.0f, 1.0f);
-
-                            int intFalloff = (int)falloff;
-                            ImGui::SliderInt("Fog Falloff", &intFalloff, 10, 100);
-                            falloff = (float)intFalloff;
-
-                            ImGui::Unindent(32.0f);
-                        }
+                        commonParameters();
 
                         ImGui::Indent(64.0f);
 
@@ -591,6 +553,18 @@ int WinMain()
                             
                             rayMarching = false;
 
+                            ImGui::Separator();
+                            ImGui::Text("Settings");
+                            ImGui::Separator();
+                            ImGui::PushFont(font2);
+                            ImGui::Text("");
+                            ImGui::PopFont();
+
+                            ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 2.5));
+
+                            commonParameters();
+
+                            ImGui::EndChild();
                             ImGui::EndTabItem();
                         }
                     }
@@ -652,6 +626,13 @@ int WinMain()
                                     numberOfEntities--;			
                                     node_clicked = -1;
                                 }
+
+                                ImGui::SameLine();
+
+                                static const char* primitives[]{ "Sphere", "Box", "Torus", "Octahedron", "Round Box", "Box Frame" };
+                                ImGui::SetNextItemWidth(screenHeight * 0.285);
+                                int changedPrimitive;
+                                ImGui::Combo("##foo", &changedPrimitive, primitives, IM_ARRAYSIZE(primitives));
                             }
                             else {
                                 ImGui::Text("");
@@ -727,11 +708,11 @@ int WinMain()
                             //imgui color picker for material, code from imgui demo scene
 
                             //
-                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - 50) * 0.15f);
-                            ImGui::SetCursorPosY((ImGui::GetWindowHeight() - 50) * 0.945);
+                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (screenWidth * 0.02605) ) * 0.15f);
+                            ImGui::SetCursorPosY((ImGui::GetWindowHeight() - (screenHeight * 0.0463) ) * 0.945);
                             //
 
-                            if (ImGui::ColorButton("Material Color", color, window_flags_editor, ImVec2(50, 50))) {
+                            if (ImGui::ColorButton("Material Color", color, window_flags_editor, ImVec2((screenWidth * 0.02605), (screenHeight * 0.0463)))) {
                                 ImGui::OpenPopup("Color Picker");
                                 backup_color = color;
                             }
@@ -902,6 +883,8 @@ int WinMain()
                 ImGui::TextWrapped("When in the Mandelbulb scene, you are provided with additional settings for rendering the 3D fractal. For higher detail, lower the Min Distance value.");
                 ImGui::Text("");
                 ImGui::TextWrapped("In the Scene Editor scene, you are able to add and customize new 3D primitives in a raymarching scene, and there are two sections, one for creating a scene and the other for modifying ray marching parameters.");
+                ImGui::Text("");
+                ImGui::TextWrapped("Made by Max Stalsitz.");
 
                 ImGui::End();
             }
@@ -933,6 +916,49 @@ int WinMain()
     //glfw shutdown
     glfwTerminate();
     return 0;
+}
+
+void commonParameters() {
+    ImGui::Checkbox("Anti-Aliasing (SSAA 4X)", &antiAliasing);
+    ImGui::Text("");
+
+    ImGui::Checkbox("Lighting", &useLighting);
+    ImGui::Indent(32.0f);
+
+    if (useLighting) {
+
+        if (scene != 4) {
+            ImGui::InputFloat3("Light Position", &lightPosition.x);
+        }
+
+        ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
+        ImGui::Indent(32.0f);
+        if (ambientOcclusion)
+            ImGui::SliderInt("Samples", &occlusionSamples, 1, 50);
+        ImGui::Unindent(32.0f);
+        ImGui::Checkbox("Reflections", &reflections);
+        ImGui::Indent(32.0f);
+
+        if (reflections)
+            ImGui::SliderFloat("Visibility", &reflectionVisibility, 0.0f, 1.0f);
+
+        ImGui::Unindent(64.0f);
+    }
+    else
+        ImGui::Indent(-32.0f);
+
+    ImGui::Checkbox("Fog", &fogEnabled);
+
+    if (fogEnabled) {
+        ImGui::Indent(32.0f);
+        ImGui::SliderFloat("Fog Visibility", &fogVisibility, 0.0f, 1.0f);
+
+        int intFalloff = (int)falloff;
+        ImGui::SliderInt("Fog Falloff", &intFalloff, 10, 100);
+        falloff = (float)intFalloff;
+
+        ImGui::Unindent(32.0f);
+    }
 }
 
 std::vector<sceneObject> removeElement(std::vector<sceneObject> arr, int elementIndex) {
