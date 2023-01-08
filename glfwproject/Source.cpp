@@ -334,6 +334,8 @@ int WinMain()
             rayTracingShader.setVec2("mouse", glm::vec2(xpo, ypo));
             rayTracingShader.setFloat("time", glfwGetTime());
 
+            rayTracingShader.setInt("scene", scene);
+
             rayTracingShader.setVec3("cameraPos", cameraPos);
             rayTracingShader.setVec3("direction", direction);
             rayTracingShader.setVec3("cameraFront", cameraFront);

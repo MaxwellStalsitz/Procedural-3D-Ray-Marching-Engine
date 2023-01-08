@@ -17,9 +17,13 @@ uniform float fogVisibility;
 uniform bool useLighting;
 uniform bool reflections;
 
-float MAX_DIST = 500;
+uniform int scene;
 
+float MAX_DIST = 500;
 vec3 background = vec3(0.5,0.7,0.9);
+
+const int numberOfSpheres = 3;
+vec4 sphere[numberOfSpheres];
 
 vec3 sphNormal( in vec3 pos, in vec4 sph )
 {
@@ -82,14 +86,10 @@ float sphOcclusion( in vec3 pos, in vec3 nor, in vec4 sph )
     return clamp( res*(sph.w*sph.w)/(l*l*l), 0.0, 1.0 );
 }
 
-#define NUMSPHEREES 3
-
-vec4 sphere[NUMSPHEREES];
-
 float shadow( in vec3 ro, in vec3 rd )
 {
 	float res = 1.0;
-	for( int i=0; i<NUMSPHEREES; i++ )
+	for( int i=0; i<numberOfSpheres; i++ )
         res = min( res, 8.0*sphSoftShadow(ro,rd,sphere[i]) );
 
     return res;					  
@@ -98,7 +98,7 @@ float shadow( in vec3 ro, in vec3 rd )
 float occlusion( in vec3 pos, in vec3 nor )
 {
 	float res = 1.0;
-	for( int i=0; i<NUMSPHEREES; i++ )
+	for( int i=0; i<numberOfSpheres; i++ )
 	    res *= 1.0 - sphOcclusion( pos, nor, sphere[i] ); 
 
     return res;					  
@@ -106,7 +106,7 @@ float occlusion( in vec3 pos, in vec3 nor )
 
 vec3 lig = vec3( 0.0, 2.0, 0.0);
 
-vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, float dis, vec2 uv, vec3 mate)
+vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2 uv, vec3 mate)
 {
     vec3 col;
 	
@@ -146,17 +146,9 @@ vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, floa
 
 	vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0);
 
-	//float d = softshadow(pos + normal * 0.025, light, 0.01, MAX_STEPS, 14);
-	float d = 1;
-
 	float diff = max(dot(normal, light), 0.);
 
 	col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * sha);
-
-	/*if (fogEnabled){
-		float fog = smoothstep(4.0, falloff, t.x) * fogVisibility;
-		col = mix(col, background, fog);
-	}*/
 
 	return col;	
 }  
@@ -182,7 +174,7 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
         id  = -1.0;
         obj = vec4(0.0);
 
-	    for( int i=0; i<NUMSPHEREES; i++ )
+	    for( int i=0; i<numberOfSpheres; i++ )
 	    {
 		    vec4 sph = sphere[i];
 	        float h = sphIntersect( ro, rd, sph); 
@@ -196,14 +188,12 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 
         vec3 nor, pos;
 
-        //shade reflection as whole sphere instead of half sphere
-
         if( id != -1.0)
         {
 		    pos = ro + t*rd;
 		    nor = sphNormal( pos, obj );
 
-            passCol = shade( rd, pos, nor, id, pos-obj.xyz, t, uv, vec3(0.61, 0.176, 0.176)); 
+            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, vec3(0.61, 0.176, 0.176)); 
         }
         else{
             //distance to plane
@@ -211,6 +201,9 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
             if( t > -1.0)
             {
                 tmin = t;
+
+                float distToPoint = distance(pos, vec3(ro+t*rd));
+
                 pos = ro + t*rd;
                 nor = vec3(0.0,1.0,0.0); // plane
                 vec3 tile = mix(vec3(0.0 + 1.0 * mod(floor(pos.x) + floor(pos.z), 2.0)), vec3(0.773, 0.725, 0.627), 0.5); //from inigo quilez (with modified colors)
@@ -223,11 +216,11 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
                     id  = -1.0;
                     obj = vec4(0.0);
 
-                    for( int i=0; i<NUMSPHEREES; i++ )
+                    for( int i=0; i<numberOfSpheres; i++ )
 	                {
 		                vec4 sph = sphere[i];
 	                    float h = sphIntersect( ro, rd, sph); 
-		                if( h>0.0 && h<t ) //t = min distance
+		                if( h>0.0 && h<t )
 		                {
 			                t = h;
                             obj = sph;
@@ -236,12 +229,11 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 	                }
 
                     if (id == -1.0){
-				        return shade( rd, pos, nor, id, pos, t, uv, tile);
-                        //passCol = shade( rd, pos, nor, id, pos, t, uv, tile);
+				        return shade( rd, pos, nor, id, pos, uv, tile);
                     }
                 }
 
-                passCol = shade( rd, pos, nor, id, pos, t, uv, tile);
+                passCol = shade( rd, pos, nor, id, pos, uv, tile);
             }
             else{
                 if (i == 0)
@@ -249,7 +241,6 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 					
                 passCol = background;
 			}
-                
         }
 
         if (i == 0)
@@ -272,25 +263,21 @@ mat3 getCam(vec3 rayOrigin)
 	return mat3(-camR, camU, cameraFront);
 }
 
-vec3 render(vec2 uv)
-{
+void manyEntityScene(){
 
-	vec2 q = gl_FragCoord.xy / resolution.xy;
-
-	float time = time*0.5;
-
-
-    /*for (int i = 0; i < NUMSPHEREES; i++){
-        float ra = pow(2/float(NUMSPHEREES-1),4.0);
+    for (int i = 0; i < numberOfSpheres; i++){
+        float ra = pow(2/float(numberOfSpheres-1),4.0);
         ra = 0.2 + 0.8*ra;
         ra *= 1.0; // scale
 
         float x = float(i % 10);
 		float z = float(i / 10);
-	sphere[i] = vec4(vec3(x*2,0.0,z*2), ra);
-    }*/
+	    sphere[i] = vec4(vec3(x*2,0.0,z*2), ra);
+    }
+}
 
-    float ra = pow(2/float(NUMSPHEREES-1),4.0);
+void defaultScene(){
+    float ra = pow(2/float(numberOfSpheres-1),4.0);
     ra = 0.2 + 0.8*ra;
     ra *= 1.0; //scale
 
@@ -300,14 +287,18 @@ vec3 render(vec2 uv)
     sphere[1] = vec4(position, ra);
     position = vec3(2, 0, -3);
     sphere[2] = vec4(position, ra);
+}
 
-    float le = 2.0;
-    float px = 1.0*(2.0/resolution.y)*(1.0/le);
+vec3 render(vec2 uv)
+{
+	vec2 q = gl_FragCoord.xy / resolution.xy;
+
+	float time = time*0.5;
+
+    defaultScene(); // setting up scene entities
 
     vec3 ro, rd;
-
     ro = cameraPos; 
-
     rd = getCam(ro) * normalize(vec3(uv, 1.0));
 
 	vec3 col = vec3(0);
