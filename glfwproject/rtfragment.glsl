@@ -15,6 +15,8 @@ uniform bool fogEnabled;
 uniform float fogVisibility;
 
 uniform bool useLighting;
+uniform vec3 lightPosition;
+
 uniform bool reflections;
 
 uniform int scene;
@@ -104,51 +106,50 @@ float occlusion( in vec3 pos, in vec3 nor )
     return res;					  
 }
 
-vec3 lig = vec3( 0.0, 2.0, 0.0);
-
 vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2 uv, vec3 mate)
 {
     vec3 col;
 	
-	vec3 normal = nor;
+    if (useLighting){
+	    vec3 normal = nor;
 
-	vec3 lp;
-	lp = lig;
+	    vec3 light = normalize(lightPosition - pos);
+	    vec3 H = reflect(-light, normal);
+	    vec3 V = -rd;
 
-	vec3 light = normalize(lp - pos);
-	vec3 H = reflect(-light, normal);
-	vec3 V = -rd;
+	    vec3 specularColor = vec3(0.5);
+	    float specularPower = 10.0;
+	    vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower);
+	    vec3 material = mate;
 
-	vec3 specularColor = vec3(0.5);
-	float specularPower = 10.0;
-	vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower);
-	vec3 material = mate;
+	    float diffuse;
+	    diffuse = clamp(dot(normal, normalize(lightPosition - pos)), 0.0, 1.0);
+	    diffuse *= 5.0 / dot(light - pos, light - pos);
+	    vec3 ambient = material * 0.25;
 
-	float diffuse;
-	diffuse = clamp(dot(normal, normalize(lp - pos)), 0.0, 1.0);
-	diffuse *= 5.0 / dot(light - pos, light - pos);
-	vec3 ambient = material * 0.25;
+	    float fresnel = 0.25 * pow(1.0 + dot(rd, normal), 3.0);
 
-	float fresnel = 0.25 * pow(1.0 + dot(rd, normal), 3.0);
+	    float occ;
 
-	float occ;
+        float dif = clamp( dot(nor,lightPosition), 0.0, 1.0 );
+        float sha = 1.0;
+            if( dif>0.001 ) sha = shadow( pos, lightPosition );
 
-    float dif = clamp( dot(nor,lig), 0.0, 1.0 );
-    float sha = 1.0;
-        if( dif>0.001 ) sha = shadow( pos, lig );
+	    if (ambientOcclusion){
+                occ = occlusion( pos, nor );
+                occ = occ*0.5 + 0.5*occ*occ;
+        }
+        else
+            occ = 1;
 
-	if (ambientOcclusion){
-            occ = occlusion( pos, nor );
-            occ = occ*0.5 + 0.5*occ*occ;
+	    vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0);
+
+	    float diff = max(dot(normal, light), 0.);
+
+	    col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * sha);
     }
     else
-        occ = 1;
-
-	vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0);
-
-	float diff = max(dot(normal, light), 0.);
-
-	col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * sha);
+        col = mate;
 
 	return col;	
 }  

@@ -344,6 +344,7 @@ int WinMain()
             rayTracingShader.setFloat("fogVisibility", fogVisibility);
 
             rayTracingShader.setBool("useLighting", useLighting);
+            rayTracingShader.setVec3("lightPosition", lightPosition);
 
             rayTracingShader.setBool("reflections", reflections);
             rayTracingShader.setBool("antiAliasing", antiAliasing);
