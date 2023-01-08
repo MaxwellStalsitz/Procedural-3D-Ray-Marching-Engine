@@ -108,62 +108,6 @@ vec3 lig = vec3( 0.0, 2.0, 0.0);
 
 vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, float dis, vec2 uv, vec3 mate)
 {
-    /*
-    vec3 finalColor;
-    if (useLighting){
-        vec3 light = normalize(lig - pos);
-
-        vec3 ref = reflect(rd, nor);
-        float fre = 0.25 * pow(1.0 + dot(rd, nor), 3.0);
-        float occ;
-    
-        if (ambientOcclusion){
-            occ = occlusion( pos, nor );
-            occ = occ*0.5 + 0.5*occ*occ;
-        }
-        else
-            occ = 1;
-    
-        float dif = clamp( dot(nor,lig), 0.0, 1.0 );
-
-        float diffuse;
-	    diffuse = clamp(dot(nor, normalize(lig - pos)), 0.0, 1.0);
-	    diffuse *= 5.0 / dot(light - pos, light - pos);
-
-        float sha = 1.0;
-        if( dif>0.001 ) sha = shadow( pos, lig );
-
-        vec3 bac = vec3(1) * 0.05 * clamp(dot(nor, -light), 0.0, 1.0);
-
-        vec3 H = reflect(-light, nor);
-	    vec3 V = -rd;
-
-        vec3 specularColor = vec3(0.5);
-	    float specularPower = 10.0;
-        vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower);
-		
-        vec3 qe = vec3(0.5,0.5,0.5);
-
-        vec3 ambient = mate * 0.05;
-
-        vec3 col = mate * ((bac + ambient + fre) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * sha); //+refval
-
-        float r = clamp(qe.x,0.0,1.0);
-        
-        if (fogEnabled){
-            float fog = smoothstep(4.0, 50.0, dis) * fogVisibility;
-	        col = mix(col, background, fog);
-        }
-
-        finalColor = col;
-
-    }
-    else
-        finalColor = mate;
-
-    return finalColor;
-    */
-
     vec3 col;
 	
 	vec3 normal = nor;

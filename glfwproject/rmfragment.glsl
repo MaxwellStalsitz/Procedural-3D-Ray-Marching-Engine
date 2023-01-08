@@ -288,41 +288,51 @@ float plane( vec3 p, vec4 n ) {
   return dot(p,n.xyz) + n.w;
 }
 
-#define BACK_WALL_SDF plane(pos, vec4(0.0, 0.0, -1.0, 6.0))
-#define FRONT_WALL_SDF plane(pos + vec3(0.0,0.0,25.0), vec4(0.0, 0.0, -1.0, 6.0))
-#define LEFT_WALL_SDF plane(pos, vec4(1.0, 0.0, 0.0, 4.0))
-#define RIGHT_WALL_SDF plane(pos, vec4(-1.0, 0.0, 0.0, 4.0))
-#define CEILING_SDF plane(pos, vec4(0.0, -1.0, 0.0, 5))
-#define FLOOR_SDF plane(pos, vec4(0.0, 1.0, 0.0, 2.0))
-#define TALL_BOX_SDF sdBox(rotateY(pos + vec3(-1.5, 0.0, -2.0), 65.0 * PI / 180.0), vec3(1.0, 2.0, 1.2))
-#define SMALL_BOX_SDF sdBox(rotateY(pos + vec3(1.5, 1.0, 0.0), -65.0 * PI / 180.0), vec3(1.0, 1.0, 1.0))
-
 vec2 cornellBox(vec3 pos){
-    vec2 t = vec2(BACK_WALL_SDF, 1.0);
-    
-    float t2;
-    if((t2 = LEFT_WALL_SDF) < t.x) {
-        t = vec2(t2, 4.0);
-    }
-    if((t2 = RIGHT_WALL_SDF) < t.x) {
-        t = vec2(t2, 3.0);
-    }
-    if((t2 = CEILING_SDF) < t.x) {
-        t = vec2(t2, 1.0);
-    }
-    if((t2 = FLOOR_SDF) < t.x) {
-        t = vec2(t2, 1.0);
-    }  
+	float distanceToSDF;
+	float ID;
 
+	ID = 1.0;
+	float backWall = plane(pos, vec4(0.0, 0.0, -1.0, 6.0));
+	vec2 backSDF = vec2(backWall, ID);
+
+	ID = 4.0;
+	float leftWall = plane(pos, vec4(1.0, 0.0, 0.0, 4.0));
+	vec2 leftSDF = vec2(leftWall, ID);
+
+	ID = 3.0;
+	float rightWall = plane(pos, vec4(-1.0, 0.0, 0.0, 4.0));
+	vec2 rightSDF = vec2(rightWall, ID);
+
+	ID = 1.0;
+	float ceiling = plane(pos, vec4(0.0, -1.0, 0.0, 5));
+	vec2 ceilingSDF = vec2(ceiling, ID);
+
+	ID = 1.0;
+	float ground = plane(pos, vec4(0.0, 1.0, 0.0, 2.0));
+	vec2 groundSDF = vec2(ground, ID);
+
+	//----------------------------------------------------------------------
+
+	ID = 1.0;
 	float tallBox = sdBox(rotateY(pos + vec3(-1.5, 0.0, -2.0), 65.0 * PI / 180.0), vec3(1.0, 2.0, 1.2));
-	vec2 tallSDF = vec2(tallBox, 1.0);
-	float smallBox = sdBox(rotateY(pos + vec3(1.5, 1.0, 0.0), -65.0 * PI / 180.0), vec3(1.0, 1.0, 1.0));
-	vec2 smallSDF = vec2(smallBox, 1.0);
-	
-	t = mergeResults(t, tallSDF);
-	t = mergeResults(t, smallSDF);
+	vec2 tallSDF = vec2(tallBox, ID);
 
-	return t;
+	ID = 1.0;
+	float smallBox = sdBox(rotateY(pos + vec3(1.5, 1.0, 0.0), -65.0 * PI / 180.0), vec3(1.0, 1.0, 1.0));
+	vec2 smallSDF = vec2(smallBox, ID);
+	
+	vec2 result = backSDF;
+
+	result = mergeResults(result, leftSDF);
+	result = mergeResults(result, rightSDF);
+	result = mergeResults(result, ceilingSDF);
+	result = mergeResults(result, groundSDF);
+
+	result = mergeResults(result, tallSDF);
+	result = mergeResults(result, smallSDF);
+
+	return result;
 }
 
 vec2 mandelbulb(vec3 pos) 
