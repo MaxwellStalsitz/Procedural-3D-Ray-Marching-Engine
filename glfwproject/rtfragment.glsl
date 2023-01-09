@@ -25,6 +25,12 @@ float MAX_DIST = 500;
 vec3 background = vec3(0.5,0.7,0.9);
 
 const int numberOfSpheres = 3;
+
+struct Sphere{
+    vec4 sphere;
+    int id;
+};
+
 vec4 sphere[numberOfSpheres];
 
 vec3 sphNormal( in vec3 pos, in vec4 sph )
@@ -133,7 +139,7 @@ vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2
 
         float dif = clamp( dot(nor,lightPosition), 0.0, 1.0 );
         float sha = 1.0;
-            if( dif>0.001 ) sha = shadow( pos, lightPosition );
+        if( dif>0.001 ) sha = shadow( pos, lightPosition );
 
 	    if (ambientOcclusion){
                 occ = occlusion( pos, nor );
@@ -277,7 +283,8 @@ void manyEntityScene(){
     }
 }
 
-void defaultScene(){
+void defaultScene()
+{
     float ra = pow(2/float(numberOfSpheres-1),4.0);
     ra = 0.2 + 0.8*ra;
     ra *= 1.0; //scale
@@ -311,11 +318,13 @@ vec3 render(vec2 uv)
     return col;
 }
 
-vec2 getUV(vec2 offset){
+vec2 getUV(vec2 offset)
+{
 	return ((gl_FragCoord.xy + offset) - 0.5 * resolution.xy) / resolution.y;
 }
 
-void main(){
+void main()
+{
     vec3 col;
 
      if (antiAliasing){

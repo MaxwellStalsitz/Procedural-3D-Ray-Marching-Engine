@@ -840,8 +840,8 @@ int WinMain()
                     fogVisibility = 1.0f;
                     lightPosition = glm::vec3(0, 2, 0);
                 }
-                ImGui::Separator();
 
+                ImGui::Separator();
                 }
 
                 ImGui::PopStyleVar();
@@ -863,12 +863,14 @@ int WinMain()
             else {
                 ImGui::TextWrapped("This project is realtime OpenGL rendering engine that has support for ray marching and ray tracing rendering.");
                 ImGui::Text("");
+
                 ImGui::TextWrapped("The engine interface was created using Dear ImGui, along with the following libraries:");
                 ImGui::BulletText("OpenGL");
 				ImGui::BulletText("GLFW");
 				ImGui::BulletText("GLM");
 				ImGui::BulletText("stb_image");
                 ImGui::Text("");
+
                 ImGui::TextWrapped("The engine has support for the following features/lighting effects:");
 				ImGui::BulletText("Ray marching and Ray tracing rendering");
 				ImGui::BulletText("Ambient occlusion");
@@ -879,14 +881,19 @@ int WinMain()
                 ImGui::BulletText("Performance-measuring utilities");
                 ImGui::BulletText("Ray marching custom scene editor");
                 ImGui::Text("");
+
                 ImGui::TextWrapped("The project is divided into different scenes, which can be changed in the scene tab, found in upper-left corner.");
                 ImGui::Text("");
+
                 ImGui::TextWrapped("For the Demo Scene & Cornell Box Scene, you can switch tabs in the parameter window to change between ray marching and ray tracing, both with according settings.");
                 ImGui::Text("");
+
                 ImGui::TextWrapped("When in the Mandelbulb scene, you are provided with additional settings for rendering the 3D fractal. For higher detail, lower the Min Distance value.");
                 ImGui::Text("");
+
                 ImGui::TextWrapped("In the Scene Editor scene, you are able to add and customize new 3D primitives in a raymarching scene, and there are two sections, one for creating a scene and the other for modifying ray marching parameters.");
                 ImGui::Text("");
+
                 ImGui::TextWrapped("Made by Max Stalsitz.");
 
                 ImGui::End();
@@ -979,7 +986,6 @@ void centerText(std::string text) {
     ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
     ImGui::Text(text.c_str());
 }
-
 
 //mouse button input
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
