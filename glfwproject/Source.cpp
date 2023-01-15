@@ -349,6 +349,7 @@ int WinMain()
 
             rayTracingShader.setBool("reflections", reflections);
             rayTracingShader.setInt("reflectionCount", reflectionCount);
+            rayTracingShader.setFloat("visibility", reflectionVisibility);
 
             rayTracingShader.setBool("antiAliasing", antiAliasing);
             rayTracingShader.setBool("ambientOcclusion", ambientOcclusion);
@@ -839,6 +840,7 @@ int WinMain()
                     timeMultiplier = 1.0f;
                     reflections = false;
                     reflectionVisibility = 0.5f;
+                    reflectionCount = 2;
                     fogEnabled = true;
                     fogVisibility = 1.0f;
                     lightPosition = glm::vec3(0, 2, 0);

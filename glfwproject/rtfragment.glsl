@@ -19,6 +19,7 @@ uniform bool useLighting;
 uniform vec3 lightPosition;
 
 uniform bool reflections;
+uniform float visibility;
 uniform int reflectionCount;
 
 uniform int scene;
@@ -270,7 +271,7 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
                         if (id == -1.0)
                             return shade( rd, pos, nor, id, pos, uv, 0, tmin) ;
                         else{
-                            passCol = shade( rd, pos, nor, id, pos, uv, spheres[int(id)].materialId, tmin) ;
+                            return mix(shade( rd, pos, nor, id, pos, uv, 0, tmin), shade( rd, pos, nor, id, pos, uv, spheres[int(id)].materialId, tmin), visibility);
                             sphereCheck = true;
                         }
                     }
@@ -291,7 +292,7 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
         if (i == 0)
             col = passCol;
         else
-		    col = mix(col, passCol, 0.5);
+		    col = mix(col, passCol, visibility);
 
         rd = reflect (rd, nor);
         ro = pos;
