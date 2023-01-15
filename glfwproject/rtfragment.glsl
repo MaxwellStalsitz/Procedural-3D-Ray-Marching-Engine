@@ -229,7 +229,7 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 		    pos = ro + t*rd;
 		    nor = sphNormal( pos, obj );
 
-            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, spheres[i].materialId, tmin); 
+            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, spheres[int(id)].materialId, tmin); 
         }
         else{
             //distance to plane
@@ -319,11 +319,11 @@ void defaultScene()
 
 	vec3 position = vec3(-.5,0.0,-6);
 	spheres[0].sphere = vec4(position, ra);
-    spheres[0].materialId = RED;
+    spheres[0].materialId = GREEN;
 
     position = vec3(-3.0, 0.0, -3.0);
     spheres[1].sphere = vec4(position, ra);
-    spheres[1].materialId = GREEN;
+    spheres[1].materialId = RED;
 
 
     position = vec3(2, 0, -3);
