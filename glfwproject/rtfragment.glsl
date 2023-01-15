@@ -29,10 +29,10 @@ const int numberOfSpheres = 3;
 
 struct Sphere{
     vec4 sphere;
-    int id;
+    int materialId;
 };
 
-vec4 sphere[numberOfSpheres];
+Sphere spheres[numberOfSpheres];
 
 vec3 sphNormal( in vec3 pos, in vec4 sph )
 {
@@ -99,7 +99,7 @@ float shadow( in vec3 ro, in vec3 rd )
 {
 	float res = 1.0;
 	for( int i=0; i<numberOfSpheres; i++ )
-        res = min( res, 8.0*sphSoftShadow(ro,rd,sphere[i]) );
+        res = min( res, 8.0*sphSoftShadow(ro,rd,spheres[i].sphere) );
 
     return res;					  
 }
@@ -108,12 +108,25 @@ float occlusion( in vec3 pos, in vec3 nor )
 {
 	float res = 1.0;
 	for( int i=0; i<numberOfSpheres; i++ )
-	    res *= 1.0 - sphOcclusion( pos, nor, sphere[i] ); 
+	    res *= 1.0 - sphOcclusion( pos, nor, spheres[i].sphere ); 
 
     return res;					  
 }
 
-vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2 uv, vec3 mate, float tmin)
+vec3 getMaterial(int id, vec3 pos){
+    vec3 col;
+
+    if (id == 0){
+        col = mix(vec3(0.0 + 1.0 * mod(floor(pos.x) + floor(pos.z), 2.0)), vec3(0.773, 0.725, 0.627), 0.5); //from inigo quilez (with modified colors)
+    }
+    else if (id == 1){
+        col = vec3(1.0, 0.0, 0.0);
+    }
+
+    return col;
+}
+
+vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2 uv, int materialId, float tmin)
 {
     vec3 col;
 	
@@ -127,7 +140,7 @@ vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2
 	    vec3 specularColor = vec3(0.5);
 	    float specularPower = 10.0;
 	    vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower);
-	    vec3 material = mate;
+	    vec3 material = getMaterial(materialId, pos);
 
 	    float diffuse;
 	    diffuse = clamp(dot(normal, normalize(lightPosition - pos)), 0.0, 1.0);
@@ -156,7 +169,7 @@ vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2
 	    col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * sha);
     }
     else
-        col = mate;
+        col = getMaterial(materialId, pos);
 
     if (fogEnabled && id == -1.0){
 		float fog = smoothstep(4.0, falloff, tmin) * fogVisibility;
@@ -189,7 +202,7 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 
 	    for( int i=0; i<numberOfSpheres; i++ )
 	    {
-		    vec4 sph = sphere[i];
+		    vec4 sph = spheres[i].sphere;
 	        float h = sphIntersect( ro, rd, sph); 
 		    if( h>0.0 && h<t ) //t = min distance
 		    {
@@ -206,7 +219,7 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 		    pos = ro + t*rd;
 		    nor = sphNormal( pos, obj );
 
-            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, vec3(0.61, 0.176, 0.176), tmin); 
+            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, spheres[i].materialId, tmin); 
         }
         else{
             //distance to plane
@@ -219,7 +232,6 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 
                 pos = ro + t*rd;
                 nor = vec3(0.0,1.0,0.0); // plane
-                vec3 tile = mix(vec3(0.0 + 1.0 * mod(floor(pos.x) + floor(pos.z), 2.0)), vec3(0.773, 0.725, 0.627), 0.5); //from inigo quilez (with modified colors)
 
                 if (i == 0){
                     rd = reflect (rd, nor);
@@ -231,7 +243,7 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 
                     for( int i=0; i<numberOfSpheres; i++ )
 	                {
-		                vec4 sph = sphere[i];
+		                vec4 sph = spheres[i].sphere;
 	                    float h = sphIntersect( ro, rd, sph); 
 		                if( h>0.0 && h<t )
 		                {
@@ -242,11 +254,11 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 	                }
 
                     if (id == -1.0){
-                        return shade( rd, pos, nor, id, pos, uv, tile, tmin) ;
+                        return shade( rd, pos, nor, id, pos, uv, 0, tmin) ;
                     }
                 }
 
-                passCol = shade( rd, pos, nor, id, pos, uv, tile, tmin);
+                passCol = shade( rd, pos, nor, id, pos, uv, 0, tmin);
             }
             else{
                 if (i == 0)
@@ -285,7 +297,7 @@ void manyEntityScene(){
 
         float x = float(i % 10);
 		float z = float(i / 10);
-	    sphere[i] = vec4(vec3(x*2,0.0,z*2), ra);
+	    spheres[i].sphere = vec4(vec3(x*2,0.0,z*2), ra);
     }
 }
 
@@ -296,11 +308,17 @@ void defaultScene()
     ra *= 1.0; //scale
 
 	vec3 position = vec3(-.5,0.0,-6);
-	sphere[0] = vec4(position, ra);
+	spheres[0].sphere = vec4(position, ra);
+    spheres[0].materialId = 1;
+
     position = vec3(-3.0, 0.0, -3.0);
-    sphere[1] = vec4(position, ra);
+    spheres[1].sphere = vec4(position, ra);
+    spheres[1].materialId = 1;
+
+
     position = vec3(2, 0, -3);
-    sphere[2] = vec4(position, ra);
+    spheres[2].sphere = vec4(position, ra);
+    spheres[2].materialId = 1;
 }
 
 vec3 render(vec2 uv)
