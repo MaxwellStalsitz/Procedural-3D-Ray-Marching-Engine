@@ -233,6 +233,8 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
         }
         else{
             //distance to plane
+            bool sphereCheck = false;
+
             float t = (-1.0-ro.y)/rd.y; //-1.0 = height
             if( t > -1.0)
             {
@@ -263,12 +265,16 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
                         }
 	                }
 
-                    if (id == -1.0){
+                    if (id == -1.0)
                         return shade( rd, pos, nor, id, pos, uv, 0, tmin) ;
+                    else{
+                        passCol = shade( rd, pos, nor, id, pos, uv, spheres[int(id)].materialId, tmin) ;
+                        sphereCheck = true;
                     }
                 }
 
-                passCol = shade( rd, pos, nor, id, pos, uv, 0, tmin);
+                if (sphereCheck == false)
+                    passCol = shade( rd, pos, nor, id, pos, uv, 0, tmin);
             }
             else{
                 if (i == 0)
