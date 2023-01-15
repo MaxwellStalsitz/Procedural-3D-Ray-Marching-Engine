@@ -340,8 +340,9 @@ int WinMain()
             rayTracingShader.setVec3("direction", direction);
             rayTracingShader.setVec3("cameraFront", cameraFront);
 
-            rayMarchingShader.setBool("fogEnabled", fogEnabled);
+            rayTracingShader.setBool("fogEnabled", fogEnabled);
             rayTracingShader.setFloat("fogVisibility", fogVisibility);
+            rayTracingShader.setFloat("falloff", falloff);
 
             rayTracingShader.setBool("useLighting", useLighting);
             rayTracingShader.setVec3("lightPosition", lightPosition);

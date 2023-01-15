@@ -13,6 +13,7 @@ uniform vec3 cameraFront;
 
 uniform bool fogEnabled;
 uniform float fogVisibility;
+uniform float falloff;
 
 uniform bool useLighting;
 uniform vec3 lightPosition;
@@ -112,7 +113,7 @@ float occlusion( in vec3 pos, in vec3 nor )
     return res;					  
 }
 
-vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2 uv, vec3 mate)
+vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2 uv, vec3 mate, float tmin)
 {
     vec3 col;
 	
@@ -157,6 +158,11 @@ vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2
     else
         col = mate;
 
+    if (fogEnabled && id == -1.0){
+		float fog = smoothstep(4.0, falloff, tmin) * fogVisibility;
+		col = mix(col, background, fog);
+	}
+
 	return col;	
 }  
 
@@ -200,7 +206,7 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 		    pos = ro + t*rd;
 		    nor = sphNormal( pos, obj );
 
-            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, vec3(0.61, 0.176, 0.176)); 
+            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, vec3(0.61, 0.176, 0.176), tmin); 
         }
         else{
             //distance to plane
@@ -236,11 +242,11 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 	                }
 
                     if (id == -1.0){
-				        return shade( rd, pos, nor, id, pos, uv, tile);
+                        return shade( rd, pos, nor, id, pos, uv, tile, tmin) ;
                     }
                 }
 
-                passCol = shade( rd, pos, nor, id, pos, uv, tile);
+                passCol = shade( rd, pos, nor, id, pos, uv, tile, tmin);
             }
             else{
                 if (i == 0)
