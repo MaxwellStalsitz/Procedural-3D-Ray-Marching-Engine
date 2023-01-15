@@ -19,6 +19,7 @@ uniform bool useLighting;
 uniform vec3 lightPosition;
 
 uniform bool reflections;
+uniform int reflectionCount;
 
 uniform int scene;
 
@@ -199,9 +200,9 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 	float id  = -1.0;
     vec4  obj = vec4(0.0);
 
-    int refl = 1;
-    if (reflections)
-        refl = 2;
+    int refl = reflectionCount;
+
+    if (!reflections) refl = 1;
 
     for (int i = 0; i < refl; i++){
         vec3 passCol;
@@ -265,12 +266,15 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
                         }
 	                }
 
-                    if (id == -1.0)
-                        return shade( rd, pos, nor, id, pos, uv, 0, tmin) ;
-                    else{
-                        passCol = shade( rd, pos, nor, id, pos, uv, spheres[int(id)].materialId, tmin) ;
-                        sphereCheck = true;
+                    if (reflections){
+                        if (id == -1.0)
+                            return shade( rd, pos, nor, id, pos, uv, 0, tmin) ;
+                        else{
+                            passCol = shade( rd, pos, nor, id, pos, uv, spheres[int(id)].materialId, tmin) ;
+                            sphereCheck = true;
+                        }
                     }
+
                 }
 
                 if (sphereCheck == false)
@@ -287,9 +291,8 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
         if (i == 0)
             col = passCol;
         else
-		    col += mix(col, passCol, 0.5);
-        
-        
+		    col = mix(col, passCol, 0.5);
+
         rd = reflect (rd, nor);
         ro = pos;
     }

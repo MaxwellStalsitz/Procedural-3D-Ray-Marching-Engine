@@ -53,6 +53,7 @@ float timeMultiplier = 1.0f;
 
 bool reflections = false;
 float reflectionVisibility = 0.5f;
+int reflectionCount = 2;
 
 bool fogEnabled = true;
 float fogVisibility = 1.0f;

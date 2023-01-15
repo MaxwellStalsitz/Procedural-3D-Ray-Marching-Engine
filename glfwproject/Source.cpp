@@ -348,6 +348,8 @@ int WinMain()
             rayTracingShader.setVec3("lightPosition", lightPosition);
 
             rayTracingShader.setBool("reflections", reflections);
+            rayTracingShader.setInt("reflectionCount", reflectionCount);
+
             rayTracingShader.setBool("antiAliasing", antiAliasing);
             rayTracingShader.setBool("ambientOcclusion", ambientOcclusion);
         }
@@ -950,8 +952,11 @@ void commonParameters() {
         ImGui::Checkbox("Reflections", &reflections);
         ImGui::Indent(32.0f);
 
-        if (reflections)
+        if (reflections) {
             ImGui::SliderFloat("Visibility", &reflectionVisibility, 0.0f, 1.0f);
+
+            if (!rayMarching) ImGui::SliderInt("Count", &reflectionCount, 2, 5);
+        }
 
         ImGui::Unindent(64.0f);
     }
