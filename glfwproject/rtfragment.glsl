@@ -25,6 +25,10 @@ uniform int scene;
 float MAX_DIST = 500;
 vec3 background = vec3(0.5,0.7,0.9);
 
+#define RED 1;
+#define GREEN 2;
+#define BLUE 3;
+
 const int numberOfSpheres = 3;
 
 struct Sphere{
@@ -113,14 +117,20 @@ float occlusion( in vec3 pos, in vec3 nor )
     return res;					  
 }
 
-vec3 getMaterial(int id, vec3 pos){
+vec3 getMaterial(int materialId, vec3 pos){
     vec3 col;
 
-    if (id == 0){
+    if (materialId == 0){
         col = mix(vec3(0.0 + 1.0 * mod(floor(pos.x) + floor(pos.z), 2.0)), vec3(0.773, 0.725, 0.627), 0.5); //from inigo quilez (with modified colors)
     }
-    else if (id == 1){
-        col = vec3(1.0, 0.0, 0.0);
+    else if (materialId == 1){ // red
+        col = vec3(0.61, 0.176, 0.176);
+    }
+    else if (materialId == 2){ // green
+        col = vec3(0.49, 0.74, 0.4);
+    }
+    else if (materialId == 3){ // blue
+        col = vec3(0.247, 0.427, 0.819);
     }
 
     return col;
@@ -309,16 +319,16 @@ void defaultScene()
 
 	vec3 position = vec3(-.5,0.0,-6);
 	spheres[0].sphere = vec4(position, ra);
-    spheres[0].materialId = 1;
+    spheres[0].materialId = RED;
 
     position = vec3(-3.0, 0.0, -3.0);
     spheres[1].sphere = vec4(position, ra);
-    spheres[1].materialId = 1;
+    spheres[1].materialId = GREEN;
 
 
     position = vec3(2, 0, -3);
     spheres[2].sphere = vec4(position, ra);
-    spheres[2].materialId = 1;
+    spheres[2].materialId = BLUE;
 }
 
 vec3 render(vec2 uv)
