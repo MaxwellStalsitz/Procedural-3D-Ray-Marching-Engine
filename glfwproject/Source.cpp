@@ -809,10 +809,10 @@ int WinMain()
                 ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35, screenHeight / 3), false, window_flags_child);
 
                 centerText("Frame Rate (FPS)");
-                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, 0.0f, 1000.0f, ImVec2(screenWidth * 0.35, 350.0f));
+                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, average + (average / 10), average - (average / 10), ImVec2(screenWidth * 0.35, 350.0f));
 
                 centerText("Milliseconds Per Frame");
-                ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, 0.0f, 100.0f, ImVec2(screenWidth * 0.35, 330.0f));
+                ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, average2 + (average2 / 10), average2 - (average2 / 10), ImVec2(screenWidth * 0.35, 330.0f));
 
                 ImGui::EndChild();
 
