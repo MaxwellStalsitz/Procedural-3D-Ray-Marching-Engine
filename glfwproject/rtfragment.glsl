@@ -176,17 +176,15 @@ vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2
 
 	    vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0);
 
-	    float diff = max(dot(normal, light), 0.);
-
 	    col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * sha);
     }
     else
         col = getMaterial(materialId, pos);
 
     if (fogEnabled && id == -1.0){
-		float fog = smoothstep(4.0, falloff, tmin) * fogVisibility;
+        float fog = smoothstep(4.0, falloff, tmin) * fogVisibility;
 		col = mix(col, background, fog);
-	}
+    }
 
 	return col;	
 }  
@@ -195,11 +193,13 @@ float rand(vec2 co){
     return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
 }
 
-vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
+vec3 trace( in vec3 ro, in vec3 rd,  in float tmin, vec2 uv) // here
 {
+    vec3 col = vec3(0);
+
 	float t = tmin;
 	float id  = -1.0;
-    vec4  obj = vec4(0.0);
+    vec4 obj = vec4(0.0);
 
     int refl = reflectionCount;
 
@@ -231,70 +231,33 @@ vec3 trace( in vec3 ro, in vec3 rd, vec3 col, in float tmin, vec2 uv)
 		    pos = ro + t*rd;
 		    nor = sphNormal( pos, obj );
 
-            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, spheres[int(id)].materialId, tmin); 
+            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, spheres[int(id)].materialId, t); 
         }
         else{
-            //distance to plane
-            bool sphereCheck = false;
 
             float t = (-1.0-ro.y)/rd.y; //-1.0 = height
-            if( t > -1.0)
-            {
+            if( t > -1.0){
                 tmin = t;
 
                 float distToPoint = distance(pos, vec3(ro+t*rd));
 
                 pos = ro + t*rd;
-                nor = vec3(0.0,1.0,0.0); // plane
+                nor = vec3(0.0,1.0,0.0);
 
-                if (i == 0){
-                    rd = reflect (rd, nor);
-                    ro = pos;
+                passCol = shade( rd, pos, nor, id, pos*0.5, uv, 0, t);
 
-                    t = tmin;
-                    id  = -1.0;
-                    obj = vec4(0.0);
-
-                    for( int i=0; i<numberOfSpheres; i++ )
-	                {
-		                vec4 sph = spheres[i].sphere;
-	                    float h = sphIntersect( ro, rd, sph); 
-		                if( h>0.0 && h<t )
-		                {
-			                t = h;
-                            obj = sph;
-			                id = float(i);	
-                        }
-	                }
-
-                    if (reflections){
-                        if (id == -1.0)
-                            return shade( rd, pos, nor, id, pos, uv, 0, tmin) ;
-                        else{
-                            return mix(shade( rd, pos, nor, id, pos, uv, 0, tmin), shade( rd, pos, nor, id, pos, uv, spheres[int(id)].materialId, tmin), visibility);
-                            sphereCheck = true;
-                        }
-                    }
-
-                }
-
-                if (sphereCheck == false)
-                    passCol = shade( rd, pos, nor, id, pos, uv, 0, tmin);
             }
             else{
-                if (i == 0)
-                    return background;
-					
-                passCol = background;
+                if (i == 0) return background; else passCol = background;
 			}
         }
 
         if (i == 0)
             col = passCol;
         else
-		    col = mix(col, passCol, visibility);
+		    col = mix(passCol, col, visibility);
 
-        rd = reflect (rd, nor);
+        rd = normalize(reflect (rd, nor));
         ro = pos;
     }
 
@@ -353,11 +316,9 @@ vec3 render(vec2 uv)
     ro = cameraPos; 
     rd = getCam(ro) * normalize(vec3(uv, 1.0));
 
-	vec3 col = vec3(0);
-
     float tmin = 1e20;
 
-    col = trace( ro, rd, col, tmin, uv);
+    vec3 col = trace( ro, rd, tmin, uv);
 
     return col;
 }
