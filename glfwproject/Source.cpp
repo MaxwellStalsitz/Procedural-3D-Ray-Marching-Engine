@@ -599,8 +599,10 @@ int WinMain()
                                 for (int i = 0; i < numberOfEntities; i++) {
                                     std::string nodeName = " " + sceneArray[i].name;
                                     ImGui::TreeNodeEx((void*)(intptr_t)i, node_flags, nodeName.c_str(), i);
-                                    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen())
+                                    if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
                                         node_clicked = i;
+                                        changedPrimitive = sceneArray[node_clicked].shape;
+                                    }
                                 }
 
                                 ImGui::TreePop();
@@ -638,8 +640,11 @@ int WinMain()
 
                                 static const char* primitives[]{ "Sphere", "Box", "Torus", "Octahedron", "Round Box", "Box Frame" };
                                 ImGui::SetNextItemWidth(screenHeight * 0.285);
-                                int changedPrimitive;
+                                
                                 ImGui::Combo("##foo", &changedPrimitive, primitives, IM_ARRAYSIZE(primitives));
+
+                                if (sceneArray[node_clicked].shape != changedPrimitive)
+                                    sceneArray[node_clicked].shape = changedPrimitive;
                             }
                             else {
                                 ImGui::Text("");
@@ -804,7 +809,6 @@ int WinMain()
 
                 char overlay2[32];
                 sprintf_s(overlay2, "Average: %f", average2);
-
                 
                 ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35, screenHeight / 3), false, window_flags_child);
 

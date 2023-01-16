@@ -91,6 +91,7 @@ static ImVec4 color = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 static ImVec4 backup_color;
 
 int primitiveSelected = 0;
+int changedPrimitive;
 
 glm::vec3 editorPosition = glm::vec3(0.0f);
 glm::vec3 editorRotation = glm::vec3(0.0f);

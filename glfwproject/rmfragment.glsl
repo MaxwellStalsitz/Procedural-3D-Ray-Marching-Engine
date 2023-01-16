@@ -105,11 +105,12 @@ float sdRoundBox( vec3 p, vec3 b, float r )
   return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
 }
 
-float sdTorus( vec3 p, vec2 t )
+float sdTorus( vec3 p, vec2 t ) //t = inner radius
 {
-  vec2 q = vec2(length(p.xz)-t.x,p.y);
+  vec2 q = vec2(length(p.xz)- 
+  t.x,p.y);
   return length(q)-t.y;
-}
+ }
 
 float sdOctahedron( vec3 p, float s)
 {
@@ -140,54 +141,54 @@ float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale,
 	float dist;
 
 	mat4 scaleMatrix = mat4(
-		vec4(scale.x, 0, 0, 0),
-		vec4(0, scale.y, 0, 0),
-		vec4(0, 0, scale.z, 0),
-		vec4(0, 0, 0, 1)
+		vec4(scale.x, 0.0f, 0.0f, 0.0f),
+		vec4(0.0f, scale.y, 0.0, 0.0f),
+		vec4(0.0f, 0.0f, scale.z, 0.0f),
+		vec4(0.0f, 0.0f, 0.0f, 1.0f)
 	);
 
-	float x = rotation.x * PI / 180.0;
-    float y = rotation.y * PI / 180.0;
-    float z = rotation.z * PI / 180.0;
+	float x = rotation.x * PI / 180.0f;
+    float y = rotation.y * PI / 180.0f;
+    float z = rotation.z * PI / 180.0f;
 	
     mat4 rotationMatrix = mat4(
-		vec4(cos(y) * cos(z), -cos(y) * sin(z), sin(y), 0),
-		vec4(cos(x) * sin(z) + sin(x) * sin(y) * cos(z), cos(x) * cos(z) - sin(x) * sin(y) * sin(z), -sin(x) * cos(y), 0),
-		vec4(sin(x) * sin(z) - cos(x) * sin(y) * cos(z), sin(x) * cos(z) + cos(x) * sin(y) * sin(z), cos(x) * cos(y), 0),
-		vec4(0, 0, 0, 1)
+		vec4(cos(y) * cos(z), -cos(y) * sin(z), sin(y), 0.0f),
+		vec4(cos(x) * sin(z) + sin(x) * sin(y) * cos(z), cos(x) * cos(z) - sin(x) * sin(y) * sin(z), -sin(x) * cos(y), 0.0f),
+		vec4(sin(x) * sin(z) - cos(x) * sin(y) * cos(z), sin(x) * cos(z) + cos(x) * sin(y) * sin(z), cos(x) * cos(y), 0.0f),
+		vec4(0.0f, 0.0f, 0.0f, 1.0f)
 	);
 
 	mat4 translationMatrix = mat4(
-		vec4(1, 0, 0, position.x),
-		vec4(0, 1, 0, position.y),
-		vec4(0, 0, 1, position.z),
-		vec4(0, 0, 0, 1)
+		vec4(1.0f, 0.0f, 0.0f, position.x),
+		vec4(0.0f, 1.0f, 0.0f, position.y),
+		vec4(0.0f, 0.0f, 1.0f, position.z),
+		vec4(0.0f, 0.0f, 0.0f, 1.0f)
 	);
 
-	rayPosition = (vec4(rayPosition, 1) * inverse(scaleMatrix * rotationMatrix * translationMatrix)).xyz;
+	rayPosition = (vec4(rayPosition, 1.0f) * inverse(scaleMatrix * rotationMatrix * translationMatrix)).xyz;
 
 	switch(primitive){
-		case(0): 
-			dist = sdSphere(rayPosition, 1);
+		case(0): //sphere
+			dist = sdSphere(rayPosition, 1.0f);
 			break;
-		case(1):
-			dist = sdBox(rayPosition, vec3(1));
+		case(1): //box
+			dist = sdBox(rayPosition, vec3(1.0f));
 			break;
-		case(2):
-			dist = sdTorus(rayPosition, vec2(0.75,0.15));
+		case(2): //torus
+			dist = sdTorus(rayPosition, vec2(0.75f,0.15f));
 			break;
-		case(3):
-			dist = sdOctahedron(rayPosition, 1);
+		case(3): //octahedron
+			dist = sdOctahedron(rayPosition, 1.0f);
 			break;
-		case(4):
-			dist = sdRoundBox(rayPosition, vec3(1), 0.5);
+		case(4): //round box
+			dist = sdRoundBox(rayPosition, vec3(1.0f), 0.5f);
 			break;
-		case(5):
-			dist = sdBoxFrame(rayPosition, vec3(1), 0.05);
+		case(5): //box frame
+			dist = sdBoxFrame(rayPosition, vec3(1.0f), 0.05f);
 			break;
 	}
 
-	return dist;
+	return dist / scale.x;
 }
 
 vec2 customScene(vec3 rayPosition, inout vec3 material){
@@ -210,7 +211,6 @@ vec2 customScene(vec3 rayPosition, inout vec3 material){
 		vec3 position = objectPositions[i];
 		vec3 scale = objectScale[i];
 		vec3 rotation = objectRotations[i];
-		float sphereRadius = 1;
 		distanceToSDF = customDistance(primitives[i], rayPosition, position, scale, rotation);
 		vec2 newPrimitive = vec2(distanceToSDF, ID);
 
@@ -444,6 +444,7 @@ float getOcclusion(vec3 pos, vec3 normal)
 		occ += (len-dist)*weight;
 		weight *= 0.85;
 	}
+
 	return 1.0 - clamp(0.6 * occ, 0.0, 1.0);
 }
 
@@ -460,12 +461,12 @@ vec3 calcNormal(vec3 position)
 {
 	float dist = map(position).x;
 
-	//we use map.x in order to only get the distance instead of a vec2 with a material id
+	//i use map.x in order to only get the distance instead of a vec2 with a material id
 
 	return normalize(vec3(
-		(map(vec3(position.x + 0.0001, position.y, position.z)) - dist).x,
-		(map(vec3(position.x, position.y + 0.0001, position.z)) - dist).x,
-		(map(vec3(position.x, position.y, position.z + 0.0001)) - dist).x)
+		(map(vec3(position.x + 0.0001f, position.y, position.z)) - dist).x,
+		(map(vec3(position.x, position.y + 0.0001f, position.z)) - dist).x,
+		(map(vec3(position.x, position.y, position.z + 0.0001f)) - dist).x)
 	);
 }
 
@@ -504,12 +505,12 @@ vec2 rayMarch(vec3 ro, vec3 rd, inout vec3 material){
         vec3 pos = ro + t * rd; // hit point
         vec2 m = map(pos, material);
 		
-        if(m.x < MIN_DIST){
+        if(m.x <= MIN_DIST){ //hit detected
 			id = m.y;
             return vec2(t, id);
 		}
 
-		if (abs(m.x) >= MAX_DIST)
+		if (abs(m.x) > MAX_DIST)
 			break;
 
         t += m.x;
@@ -540,7 +541,7 @@ vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t, vec3 customMaterial){
 
 	vec3 material;
 
-	if (t.y != 0)
+	if (t.y != 0.0)
 		material = getMaterial(rayOrigin, t.y);
 	else
 		material = customMaterial;
@@ -588,7 +589,7 @@ vec3 render(vec2 uv)
 	if (scene != 4)
 		rayOrigin = cameraPos;
 	else
-		rayOrigin = vec3(0.0, 2, -9);
+		rayOrigin = vec3(0.0, 2.0, -9.0);
 
 	//the direction of our ray, which is computed for every single pixel of the screen (which is also fragCoord.xy/the fragment COORDINATES (one for every pixel))
 	vec3 rayDirection;
