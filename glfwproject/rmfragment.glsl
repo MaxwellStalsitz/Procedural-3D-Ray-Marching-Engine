@@ -137,6 +137,10 @@ vec3 rotateY(vec3 p, float a) {
     return vec3(cos(a) * p.x + sin(a) * p.z, p.y, -sin(a) * p.x + cos(a) * p.z);
 }
 
+float maxVec3(vec3 v){ // returns largest component in vec3
+	return max(max(v.x,v.y), v.z);
+}
+
 float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale, vec3 rotation){
 	float dist;
 
@@ -188,7 +192,7 @@ float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale,
 			break;
 	}
 
-	return dist / scale.x;
+	return (dist * maxVec3(scale));
 }
 
 vec2 customScene(vec3 rayPosition, inout vec3 material){
@@ -652,6 +656,7 @@ vec3 render(vec2 uv)
 
 	return sceneColor;
 }
+
 
 void main() 
 {
