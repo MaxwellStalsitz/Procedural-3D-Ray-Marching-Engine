@@ -53,6 +53,7 @@ uniform float falloff;
 #define RED 3;
 #define GREEN 4;
 #define BLUE 5;
+#define WHITE 6;
 
 //----------------------------------------------------------------------
 vec3 background;
@@ -63,11 +64,11 @@ vec2 mergeResults(vec2 res1, vec2 res2) //determines if a something is between t
     return (res1.x < res2.x) ? res1 : res2;
 }
 
-//from inigo quilez - https://iquilezles.org/articles/smin
-vec2 smoothMinimum(vec2 a, vec2 b, float k) {
-  float h = max(k - abs(a.x - b.x), 0.0) / k;
-  float id = (b.x < b.x) ? a.y : b.y;
-  return vec2(min(a.x, b.x) - h * h * h * k * 1.0 / 6.0, id);
+vec2 smoothMinimum(vec2 a, vec2 b, float k)
+{
+    float h = clamp(0.5+0.5*(b.x-a.x)/k, 0.0,1.0);
+	float material = (a.x < b.x) ? a.y : b.y;
+    return vec2(mix(b.x, a.x, h)-k*h*(1.0-h), material);
 }
 
 vec2 differenceInResults(vec2 res1, vec2 res2)
@@ -370,9 +371,81 @@ vec2 mandelbulb(vec3 pos)
 	return vec2(0.5 * log(r) * r / dr, 1.0);
 }
 
+//----------------------------------------------------------------------
+//signed distance function operations
+
+float subtractResult(float res1, float res2){ 
+	return max(-res1, res2); 
+}
+
+float intersectResult(float res1, float res2 ){ 
+	return max(res1, res2); 
+}
+
+//----------------------------------------------------------------------
+
+vec2 distanceOperationsExample(vec3 pos, inout vec3 material){
+	float distanceToSDF;
+	float ID;
+	vec3 mixMaterial;
+
+	ID = WHITE;
+	vec3 position = vec3(0.0, -1.5, 0.0);
+	distanceToSDF = sdBox(pos-position, vec3(10, 0.5, 10));
+	vec2 baseBox = vec2(distanceToSDF, ID);
+
+	ID = 0.0;
+	position = vec3(-0.75, 1.0, 0);
+	distanceToSDF = sdSphere(pos-position, 1);
+	vec2 sphere = vec2(distanceToSDF, ID);
+
+	ID = 0.0;
+	position = vec3(0.75, 0.5, 0);
+	distanceToSDF = sdSphere(pos-position, 1);
+	vec2 sphere2 = vec2(distanceToSDF, ID);
+
+	ID = RED;
+	position = vec3(-2.5,0.0, -1.5);
+	distanceToSDF = sdTorus(rotateX(pos-position, 90.0 * PI / 180.0), vec2(0.75,0.15));
+	vec2 torus = vec2(distanceToSDF, ID);
+
+	ID = RED;
+	position = vec3(-2.5,1.25,-1.5);
+	distanceToSDF = sdTorus(rotateX(pos-position, 90.0 * PI / 180.0), vec2(0.75,0.15));
+	vec2 torus2 = vec2(distanceToSDF, ID);
+
+	ID = GREEN;
+	position = vec3(2, 0.0, 2);
+	distanceToSDF = sdBox(pos-position, vec3(0.75));
+	vec2 box = vec2(distanceToSDF, ID);
+
+	float boxCutout = sdSphere(pos-position, 1.0); // cutout
+
+	vec2 result = baseBox;
+	result = mergeResults(result, sphere2);
+	result = mergeResults(result, torus);
+	result = mergeResults(result, torus2);
+	box = differenceInResults(box, vec2(boxCutout, ID));
+	result = mergeResults(result, box);
+
+	float ratio = 0.0;
+
+	if (result.x != -1.0){
+		float k = 0.5;
+		ratio = clamp(0.5 + 0.5 * (sphere.x - result.x)/1.0, 0.0, 1.0);
+		result = smoothMinimum(result, sphere, k);
+	}
+
+	vec3 m = vec3(0.61, 0.176, 0.176);
+	material = mix(vec3(0.0, 0.0, 1.0), m, ratio);
+
+	return result;
+}
+
 //choosing map function based on scene
 vec2 map(vec3 rayPosition, inout vec3 material) //with custom scene material
-{
+{	
+	
 	vec2 result;
 
 	switch(scene){
@@ -387,6 +460,9 @@ vec2 map(vec3 rayPosition, inout vec3 material) //with custom scene material
 			break;
 		case(4):
 			result = cornellBox(rayPosition);
+			break;
+		case(5):
+			result = distanceOperationsExample(rayPosition, material);
 			break;
 	}
 	
@@ -411,6 +487,9 @@ vec2 map(vec3 rayPosition) //without custom scene material
 		case(4):
 			result = cornellBox(rayPosition);
 			break;
+		case(5):
+			result = distanceOperationsExample(rayPosition, material);
+			break;
 	}
 
 	return result;
@@ -433,6 +512,8 @@ vec3 getMaterial(vec3 p, float id)
 		m = vec3(0.49, 0.74, 0.4); // green
 	else if (id == 5.0)
 		m = vec3(0.247, 0.427, 0.819); // blue
+	else if (id == 6.0)
+		m = vec3(0.851, 0.851, 0.851);
 
     return m;
 }
@@ -584,14 +665,14 @@ vec3 render(vec2 uv)
 {
 	vec3 rayOrigin;
 
-	if (scene == 1 || scene == 3){
+	if (scene == 1 || scene == 3 || scene == 5){
 		background = vec3(0.5,0.7,0.9);
 	}
 	else
 		background = vec3(1.0,1.0,1.0);
 
 	if (scene != 4)
-		rayOrigin = cameraPos;
+		rayOrigin = vec3(cameraPos.x, 1.5, cameraPos.z);
 	else
 		rayOrigin = vec3(0.0, 2.0, -9.0);
 

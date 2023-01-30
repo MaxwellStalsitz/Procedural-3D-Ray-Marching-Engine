@@ -444,7 +444,7 @@ int WinMain()
             }
 
             if (ImGui::BeginMenu("Scene")) {
-                static const char* scenes[]{ "Demo Scene", "Mandelbulb", "Scene Editor", "Cornell Box" };
+                static const char* scenes[]{ "Demo Scene", "Mandelbulb", "Scene Editor", "Cornell Box", "Distance Operations"};
                 ImGui::Combo("##foo", &currentScene, scenes, IM_ARRAYSIZE(scenes));
                 scene = currentScene + 1;
 
@@ -470,6 +470,9 @@ int WinMain()
                 case(4):
 					sceneText = " Cornell Box ";
 					break;
+                case(5):
+                    sceneText = " Distance Operations ";
+                    break;
             }
 
             auto sceneTextWidth = ImGui::CalcTextSize(sceneText.c_str()).x;
