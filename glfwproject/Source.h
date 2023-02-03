@@ -59,6 +59,8 @@ bool fogEnabled = true;
 float fogVisibility = 1.0f;
 float falloff = 50.0f;
 
+float smoothness = 0.5f;
+
 glm::vec3 lightPosition = glm::vec3(0,2,0);
 // ------------------------------------------------------------------------
 bool start = false;

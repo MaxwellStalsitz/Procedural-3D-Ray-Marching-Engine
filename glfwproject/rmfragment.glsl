@@ -46,6 +46,8 @@ uniform bool fogEnabled;
 uniform float fogVisibility;
 uniform float falloff;
 
+uniform float smoothness;
+
 #define PI 3.1415926535897932384626433832795
 
 #define GRAY 1;
@@ -431,9 +433,8 @@ vec2 distanceOperationsExample(vec3 pos, inout vec3 material){
 	float ratio = 0.0;
 
 	if (result.x != -1.0){
-		float k = 0.5;
 		ratio = clamp(0.5 + 0.5 * (sphere.x - result.x)/1.0, 0.0, 1.0);
-		result = smoothMinimum(result, sphere, k);
+		result = smoothMinimum(result, sphere, smoothness);
 	}
 
 	vec3 m = vec3(0.61, 0.176, 0.176);
@@ -672,7 +673,7 @@ vec3 render(vec2 uv)
 		background = vec3(1.0,1.0,1.0);
 
 	if (scene != 4)
-		rayOrigin = vec3(cameraPos.x, 1.5, cameraPos.z);
+		rayOrigin = cameraPos;
 	else
 		rayOrigin = vec3(0.0, 2.0, -9.0);
 

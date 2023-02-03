@@ -280,6 +280,8 @@ int WinMain()
             rayMarchingShader.setFloat("fogVisibility", fogVisibility);
             rayMarchingShader.setFloat("falloff", falloff);
 
+            rayMarchingShader.setFloat("smoothness", smoothness);
+
             //sending array of object values to shader for scene editor
             //there is probably a better solution to this
 
@@ -983,6 +985,11 @@ void commonParameters() {
         falloff = (float)intFalloff;
 
         ImGui::Unindent(32.0f);
+    }
+
+    if (scene == 5) {
+        ImGui::Text("");
+        ImGui::SliderFloat("Smoothness", &smoothness, 0, 1);
     }
 }
 
