@@ -641,15 +641,17 @@ int WinMain()
                                     node_clicked = -1;
                                 }
 
-                                ImGui::SameLine();
+                                if (node_clicked != -1) { // need to re-iterate in the case that entity is deleted
+                                    ImGui::SameLine();
 
-                                static const char* primitives[]{ "Sphere", "Box", "Torus", "Octahedron", "Round Box", "Box Frame" };
-                                ImGui::SetNextItemWidth(screenHeight * 0.285);
-                                
-                                ImGui::Combo("##foo", &changedPrimitive, primitives, IM_ARRAYSIZE(primitives));
+                                    static const char* primitives[]{ "Sphere", "Box", "Torus", "Octahedron", "Round Box", "Box Frame" };
+                                    ImGui::SetNextItemWidth(screenHeight * 0.285);
 
-                                if (sceneArray[node_clicked].shape != changedPrimitive)
-                                    sceneArray[node_clicked].shape = changedPrimitive;
+                                    ImGui::Combo("##foo", &changedPrimitive, primitives, IM_ARRAYSIZE(primitives));
+
+                                    if (sceneArray[node_clicked].shape != changedPrimitive)
+                                        sceneArray[node_clicked].shape = changedPrimitive;
+                                }
                             }
                             else {
                                 ImGui::Text("");
@@ -989,7 +991,7 @@ void commonParameters() {
 
     if (scene == 5) {
         ImGui::Text("");
-        ImGui::SliderFloat("Smoothness", &smoothness, 0, 1);
+        ImGui::SliderFloat(" Smoothness", &smoothness, 0, 1);
     }
 }
 
