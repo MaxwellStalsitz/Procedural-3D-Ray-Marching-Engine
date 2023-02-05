@@ -58,7 +58,7 @@ float sphIntersect( in vec3 ro, in vec3 rd, in vec4 sph)
 // https://iquilezles.org/articles/sphereshadow
 float sphShadow( in vec3 ro, in vec3 rd, in vec4 sph )
 {
-    float k = 50;
+    float k = 14;
 
     vec3 oc = ro - sph.xyz;
 	float b = dot( oc, rd );
@@ -87,8 +87,8 @@ float sphSoftShadow( in vec3 ro, in vec3 rd, in vec4 sph )
     if( r.y>0.0 )
         s = max(r.x,0.0)/r.y;
     return s;
-}    
-            
+}
+
 float sphOcclusion( in vec3 pos, in vec3 nor, in vec4 sph )
 {
     vec3  r = sph.xyz - pos;
@@ -114,7 +114,7 @@ float occlusion( in vec3 pos, in vec3 nor )
 {
 	float res = 1.0;
 	for( int i=0; i<numberOfSpheres; i++ )
-	    res *= 1.0 - sphOcclusion( pos, nor, spheres[i].sphere ); 
+	    res *= 1.0 - sphOcclusion( pos, nor, spheres[i].sphere );
 
     return res;					  
 }
@@ -165,7 +165,7 @@ vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2
 
         float dif = clamp( dot(nor,lightPosition), 0.0, 1.0 );
         float sha = 1.0;
-        if( dif>0.001 ) sha = shadow( pos, lightPosition );
+        if( dif>0.001 ) sha = shadow( pos, light );
 
 	    if (ambientOcclusion){
                 occ = occlusion( pos, nor );
@@ -176,7 +176,7 @@ vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2
 
 	    vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0);
 
-	    col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * sha);
+	    col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545) * sha) + (specular * occ)));
     }
     else
         col = getMaterial(materialId, pos);
