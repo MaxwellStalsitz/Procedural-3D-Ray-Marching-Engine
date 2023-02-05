@@ -17,7 +17,7 @@ include_directories("Include/KHR")
 # ------------------------------------------------------------------------
 #imgui
 
-set(imgui_path "ImGui")
+set(imgui_path "Include/ImGui")
 
 file(GLOB imgui_sources
         ${imgui_path}/imgui.cpp
