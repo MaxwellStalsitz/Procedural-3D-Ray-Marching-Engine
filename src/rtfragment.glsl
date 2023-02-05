@@ -138,7 +138,7 @@ vec3 getMaterial(int materialId, vec3 pos){
     return col;
 }
 
-vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2 uv, int materialId, float tmin)
+vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in vec3 uvw, vec2 uv, int materialId, float tmin)
 {
     vec3 col;
 	
@@ -181,9 +181,9 @@ vec3 shade( in vec3 rd, in vec3 pos, in vec3 nor, in float id, in vec3 uvw, vec2
     else
         col = getMaterial(materialId, pos);
 
-    if (fogEnabled && id == -1.0){
-        float fog = smoothstep(4.0, falloff, tmin) * fogVisibility;
-		col = mix(col, background, fog);
+    if (fogEnabled){
+        float fog = smoothstep(4.0, falloff, distance(pos, cameraPos)) * fogVisibility;
+        col = mix(col, background, fog);
     }
 
 	return col;	
@@ -231,7 +231,7 @@ vec3 trace( in vec3 ro, in vec3 rd,  in float tmin, vec2 uv) // here
 		    pos = ro + t*rd;
 		    nor = sphNormal( pos, obj );
 
-            passCol = shade( rd, pos, nor, id, pos-obj.xyz, uv, spheres[int(id)].materialId, t); 
+            passCol = shade( rd, pos, nor, pos-obj.xyz, uv, spheres[int(id)].materialId, t);
         }
         else{
 
@@ -244,7 +244,7 @@ vec3 trace( in vec3 ro, in vec3 rd,  in float tmin, vec2 uv) // here
                 pos = ro + t*rd;
                 nor = vec3(0.0,1.0,0.0);
 
-                passCol = shade( rd, pos, nor, id, pos*0.5, uv, 0, t);
+                passCol = shade( rd, pos, nor, pos*0.5, uv, 0, t);
 
             }
             else{
