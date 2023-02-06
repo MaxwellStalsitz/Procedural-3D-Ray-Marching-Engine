@@ -29,6 +29,10 @@ bool paused = false;
 bool inEditor = false;
 static bool inInfoMenu = false;
 
+//screen width and height
+unsigned int screenWidth = 1920;
+unsigned int screenHeight = 1080;
+
 // ------------------------------------------------------------------------
 void commonParameters();
 
@@ -70,21 +74,6 @@ int selectedItem = 1;
 
 int currentScene = 0;
 int scene = 1;
-// ------------------------------------------------------------------------
-float walkSpeed = 0.3f;
-float runSpeed = 0.45f;
-float movementMultiplier = 1.0f;
-
-bool jump = false;
-float jumpHeight = 12.5f;
-
-glm::vec3 lastDesiredPos;
-
-float smoothing = 10.0f;
-float runSmoothing = 15.0f;
-
-float velocityY = 0.0f;
-const float gravity = -50.f;
 // ------------------------------------------------------------------------
 int numberOfEntities = 0;
 int node_clicked = -1;

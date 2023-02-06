@@ -15,12 +15,8 @@
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
 #include<iostream>
-#include <cstdlib>
-#include <random>
-#include <ctime>
 #include <algorithm>
 #include <string>
-#include <sstream>
 #include <vector>
 
 //glm libraries, for complex math
@@ -36,37 +32,11 @@
 //source and shader header files, for setting up variables and shader class
 #include "Source.h"
 #include "Shader.h"
-
-//screen width and height
-unsigned int screenWidth = 1920;
-unsigned int screenHeight = 1080;
+#include "cameraMovement.h"
+#include "shaderSetup.h"
 
 //window variable
 GLFWwindow* window;
-
-//delta time variables
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-
-//default height set for player
-float terrainHeight = 0.0f;
-
-//camera variables for orientation
-glm::vec3 cameraPos = glm::vec3(0.0f, terrainHeight, 0.0f);
-glm::vec3 desiredPos = cameraPos;
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-
-//camera speed variable
-float cameraSpeed = walkSpeed;
-
-//mouse/camera variables
-bool firstMouse = true;
-float yaw = -90.0f;
-float pitch = 0.0f;
-float lastX = 800.0f / 2.0;
-float lastY = 600.0 / 2.0;
-float fov = 75.0f;
 
 int WinMain()
 {
@@ -78,10 +48,10 @@ int WinMain()
     glfwWindowHint(GLFW_AUTO_ICONIFY, GL_FALSE);
 
     //creating the window with according width and height
-    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "OpenGL Rendering Engine", glfwGetPrimaryMonitor(), NULL);
+    GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "OpenGL Rendering Engine", glfwGetPrimaryMonitor(), nullptr);
 
     //fail case for glfw
-    if (window == NULL){
+    if (window == nullptr){
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
         return -1;
@@ -104,13 +74,13 @@ int WinMain()
 
     //setting application thumbnail
     GLFWimage images[1];
-    images[0].pixels = stbi_load("images/enginethumbnail.png", &images[0].width, &images[0].height, 0, 4); //rgba channels 
+    images[0].pixels = stbi_load("../Resources/images/enginethumbnail.png", &images[0].width, &images[0].height, nullptr, 4); //rgba channels
     glfwSetWindowIcon(window, 1, images);
     stbi_image_free(images[0].pixels);
 
     //shader setup
-    Shader rayMarchingShader("../src/rmvertex.glsl", "../src/rmfragment.glsl");
-    Shader rayTracingShader("../src/rtvertex.glsl", "../src/rtfragment.glsl");
+    Shader rayMarchingShader("../src/shaders/rmvertex.glsl", "../src/shaders/rmfragment.glsl");
+    Shader rayTracingShader("../src/shaders/rtvertex.glsl", "../src/shaders/rtfragment.glsl");
 
     //making sure loaded images are in the proper orientation (flipping them)
     stbi_set_flip_vertically_on_load(true);
@@ -129,7 +99,7 @@ int WinMain()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)nullptr);
     glEnableVertexAttribArray(0);
 
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
@@ -138,10 +108,10 @@ int WinMain()
 	// imgui initialization and customizing the color scheme
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImFont* font1 = io.Fonts->AddFontFromFileTTF("../src/fonts/mainfont.ttf", 24.0f, NULL); // normal font
-    ImFont* font2 = io.Fonts->AddFontFromFileTTF("../src/fonts/mainfont.ttf", 12.0f, NULL); // smaller font
-    ImFont* font3 = io.Fonts->AddFontFromFileTTF("../src/fonts/mainfont.ttf", 36.0f, NULL); // larger font
-    ImFont* font4 = io.Fonts->AddFontFromFileTTF("../src/fonts/mainfont.ttf", 6.0f, NULL); // smallest font
+    ImFont* font1 = io.Fonts->AddFontFromFileTTF("../Resources/fonts/mainfont.ttf", 24.0f, nullptr); // normal font
+    ImFont* font2 = io.Fonts->AddFontFromFileTTF("../Resources/fonts/mainfont.ttf", 12.0f, nullptr); // smaller font
+    ImFont* font3 = io.Fonts->AddFontFromFileTTF("../Resources/fonts/mainfont.ttf", 36.0f, nullptr); // larger font
+    ImFont* font4 = io.Fonts->AddFontFromFileTTF("../Resources/fonts/mainfont.ttf", 6.0f, nullptr); // smallest font
 
     // ------------------------------------------------------------------------
 
@@ -193,12 +163,11 @@ int WinMain()
     double limitFPS = 1.0 / 120.0;
 
     //game loop
-    while (!glfwWindowShouldClose(window))
-    {
+    while (!glfwWindowShouldClose(window)){
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         //delta time setup
-        float currentFrame = glfwGetTime();
+        double currentFrame = glfwGetTime();
 
         //fixed delta time (because deltatime is not constant, meaning that it's not good for physics)
         fixedDeltaTime += (currentFrame - lastFrame) / limitFPS;
@@ -240,141 +209,28 @@ int WinMain()
         //setting up shader (ray marching or ray tracing) and sending data to uniform variables in fragment shader
 
         if (rayMarching) {
-            //ray marching variables
-
-            rayMarchingShader.use();
-            rayMarchingShader.setVec2("resolution", glm::vec2(screenWidth * 1.2857, screenHeight));
-            rayMarchingShader.setFloat("time", glfwGetTime());
-            rayMarchingShader.setFloat("deltaTime", deltaTime);
-            rayMarchingShader.setVec2("mousePosition", glm::vec2(xpo, ypo));
-
-            rayMarchingShader.setVec3("cameraPos", cameraPos);
-            rayMarchingShader.setVec3("direction", direction);
-            rayMarchingShader.setVec3("cameraFront", cameraFront);
-			
-            rayMarchingShader.setBool("useLighting", useLighting);
-            rayMarchingShader.setVec3("lightPosition", lightPosition);
-
-            rayMarchingShader.setInt("MAX_STEPS", MAX_STEPS);
-            rayMarchingShader.setFloat("MAX_DIST", MAX_DIST);
-            rayMarchingShader.setFloat("MIN_DIST", MIN_DIST);
-
-            rayMarchingShader.setBool("antiAliasing", antiAliasing);
-
-            rayMarchingShader.setInt("scene", scene);
-
-            rayMarchingShader.setBool("ambientOcclusion", ambientOcclusion);
-            rayMarchingShader.setInt("samples", occlusionSamples);
-
-            rayMarchingShader.setFloat("power", power);
-            rayMarchingShader.setInt("iterations", iterations);
-            rayMarchingShader.setBool("animate", animate);
-            rayMarchingShader.setFloat("timeMultiplier", timeMultiplier);
-
-            rayMarchingShader.setInt("numberOfObjects", numberOfEntities);
-
-            rayMarchingShader.setBool("reflections", reflections);
-            rayMarchingShader.setFloat("reflectionVisibility", reflectionVisibility);
-
-            rayMarchingShader.setBool("fogEnabled", fogEnabled);
-            rayMarchingShader.setFloat("fogVisibility", fogVisibility);
-            rayMarchingShader.setFloat("falloff", falloff);
-
-            rayMarchingShader.setFloat("smoothness", smoothness);
-
-            //sending array of object values to shader for scene editor
-            //there is probably a better solution to this
-
-            const char* name;
-
-            for (int i = 0; i < numberOfEntities; ++i)
-            {
-                std::stringstream ss;
-                ss << "objectPositions[" << i << "]";
-                std::string str = ss.str();
-                name = str.c_str();
-
-                rayMarchingShader.setVec3(name, sceneArray[i].position);
-                ss.str("");
-
-                ss << "objectScale[" << i << "]";
-                str = ss.str();
-                name = str.c_str();
-
-                rayMarchingShader.setVec3(name, sceneArray[i].scale);
-                ss.str("");
-
-                ss << "primitives[" << i << "]";
-                str = ss.str();
-                name = str.c_str();
-
-                rayMarchingShader.setInt(name, sceneArray[i].shape);
-                ss.str("");
-
-                ss << "objectColors[" << i << "]";
-                str = ss.str();
-                name = str.c_str();
-
-                rayMarchingShader.setVec3(name, sceneArray[i].color);
-                ss.str("");
-
-                ss << "objectRotations[" << i << "]";
-                str = ss.str();
-                name = str.c_str();
-
-                rayMarchingShader.setVec3(name, sceneArray[i].rotation);
-                ss.str("");
-            }
-            
-            rayMarchingShader.setInt("primitive", primitiveSelected);        
+            setupRayMarching(rayMarchingShader);
         }
         else {
-            //ray tracing variables
-
-            rayTracingShader.use();
-            rayTracingShader.setVec2("resolution", glm::vec2(screenWidth, screenHeight));
-            rayTracingShader.setVec2("mouse", glm::vec2(xpo, ypo));
-            rayTracingShader.setFloat("time", glfwGetTime());
-
-            rayTracingShader.setInt("scene", scene);
-
-            rayTracingShader.setVec3("cameraPos", cameraPos);
-            rayTracingShader.setVec3("direction", direction);
-            rayTracingShader.setVec3("cameraFront", cameraFront);
-
-            rayTracingShader.setBool("fogEnabled", fogEnabled);
-            rayTracingShader.setFloat("fogVisibility", fogVisibility);
-            rayTracingShader.setFloat("falloff", falloff);
-
-            rayTracingShader.setBool("useLighting", useLighting);
-            rayTracingShader.setVec3("lightPosition", lightPosition);
-
-            rayTracingShader.setBool("reflections", reflections);
-            rayTracingShader.setInt("reflectionCount", reflectionCount);
-            rayTracingShader.setFloat("visibility", reflectionVisibility);
-
-            rayTracingShader.setBool("antiAliasing", antiAliasing);
-            rayTracingShader.setBool("ambientOcclusion", ambientOcclusion);
+            setupRayTracing(rayTracingShader);
         }
 
         // ------------------------------------------------------------------------
 
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
         // ------------------------------------------------------------------------
         ImGuiWindowFlags window_flags_transparent = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoBringToFrontOnFocus;
-        ImGuiWindowFlags window_flags_adjustable = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoFocusOnAppearing;
         ImGuiWindowFlags window_flags_parameters = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoNavFocus;
         ImGuiWindowFlags window_flags_child = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBringToFrontOnFocus;
         ImGuiWindowFlags window_flags_editor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking;
-        ImGuiWindowFlags window_flags_entityEditor = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
 		ImGuiWindowFlags window_flags_info = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize;
         // ------------------------------------------------------------------------
 
         //getting framerate
         float frameRate = ImGui::GetIO().Framerate;
 
-        ImGui::SetNextWindowPos(ImVec2(screenWidth * 0.96, screenHeight * 0.95));
+        ImGui::SetNextWindowPos(ImVec2(screenWidth * 0.96f, screenHeight * 0.95f));
         ImGui::SetNextWindowSize(ImVec2(150, 50));
 
         //fps counter (bottom right corner)
@@ -405,7 +261,7 @@ int WinMain()
         float editorWidth = 400;
         float editorHeight = 500;
 
-        if (start == false) {
+        if (!start) {
             ImGui::SetNextWindowSize(ImVec2(editorWidth, editorHeight));
             ImGui::SetNextWindowPos(ImVec2((screenWidth - editorWidth) / 2, (screenHeight - editorHeight) / 2));
         }
@@ -489,8 +345,8 @@ int WinMain()
         }
 
         if (paused) {
-            ImGui::SetNextWindowPos(ImVec2(screenWidth * 0.64285, screenHeight*0.027));
-            ImGui::SetNextWindowSize(ImVec2(screenWidth * 0.358, screenHeight*0.974));
+            ImGui::SetNextWindowPos(ImVec2(screenWidth * 0.64285f, screenHeight*0.027f));
+            ImGui::SetNextWindowSize(ImVec2(screenWidth * 0.358f, screenHeight*0.974f));
 
             if (ImGui::Begin("Parameters", nullptr, window_flags_parameters)) {
 
@@ -514,7 +370,7 @@ int WinMain()
                         ImGui::Text("");
                         ImGui::PopFont();
 
-                        ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 2.5));
+                        ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358f * 0.99f, screenHeight / 2.5f));
 
                         //formatting and setting up imgui inputs for key variables
 
@@ -548,7 +404,7 @@ int WinMain()
                             ImGui::Indent(32.0f);
 
                             if (animate) {
-                                ImGui::DragFloat("Time Multiplier", &timeMultiplier, 0.001, 0, 1, NULL, ImGuiSliderFlags_AlwaysClamp);
+                                ImGui::DragFloat("Time Multiplier", &timeMultiplier, 0.001, 0, 1, nullptr, ImGuiSliderFlags_AlwaysClamp);
                             }
                             ImGui::Indent(32.0f);
                         }
@@ -572,7 +428,7 @@ int WinMain()
                             ImGui::Text("");
                             ImGui::PopFont();
 
-                            ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 2.5));
+                            ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358f * 0.99f, screenHeight / 2.5f));
 
                             commonParameters();
 
@@ -591,7 +447,7 @@ int WinMain()
                             ImGui::Text("Scene Hierarchy");
                             ImGui::Separator();
 
-                            ImGui::BeginChild("Scene Heirarchy Child", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 2.75));
+                            ImGui::BeginChild("Scene Heirarchy Child", ImVec2(screenWidth * 0.358f * 0.99f, screenHeight / 2.75f));
 
                             //rendering heirarchy system through imgui
                             ImGui::SetNextItemOpen(true);
@@ -620,7 +476,7 @@ int WinMain()
                             ImGui::Text("Entity Editing");
                             ImGui::Separator();
 
-                            ImGui::BeginChild("Entity Editing", ImVec2(screenWidth * 0.358 * 0.99, screenHeight / 8));
+                            ImGui::BeginChild("Entity Editing", ImVec2(screenWidth * 0.358f * 0.99f, screenHeight / 8));
 
                             if (node_clicked != -1) {
                                 glm::vec3 position = sceneArray[node_clicked].position;
@@ -645,7 +501,7 @@ int WinMain()
                                     ImGui::SameLine();
 
                                     static const char* primitives[]{ "Sphere", "Box", "Torus", "Octahedron", "Round Box", "Box Frame" };
-                                    ImGui::SetNextItemWidth(screenHeight * 0.285);
+                                    ImGui::SetNextItemWidth(screenHeight * 0.285f);
 
                                     ImGui::Combo("##foo", &changedPrimitive, primitives, IM_ARRAYSIZE(primitives));
 
@@ -670,7 +526,7 @@ int WinMain()
 
                             centerText(" Entity Name ");
 
-                            ImGui::PushItemWidth(screenWidth / 2.85);
+                            ImGui::PushItemWidth(screenWidth / 2.85f);
                             ImGui::InputText(" ", entityName, IM_ARRAYSIZE(entityName));
                             ImGui::PopItemWidth();
 
@@ -693,9 +549,9 @@ int WinMain()
                             ImGui::PushFont(font3); // larger font size
                             std::string addText = " Create Entity ";
                             auto textWidth = ImGui::CalcTextSize(addText.c_str()).x;
-                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 1.25);
+                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 1.25f);
 
-                            if (ImGui::Button(addText.c_str()) && !(entityName[0] == '\0')) {
+                            if (ImGui::Button(addText.c_str()) && (entityName[0] != '\0')) {
                                 sceneObject entity;
                                 entity.name = entityName;
                                 entity.position = editorPosition;
@@ -717,21 +573,21 @@ int WinMain()
                             // ------------------------------------------------------------------------
                             //drop down for selecting entity shape
 
-                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 1.25);
+                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 1.25f);
 
                             static const char* primitives[]{ "Sphere", "Box", "Torus", "Octahedron", "Round Box", "Box Frame" };
-                            ImGui::SetNextItemWidth(screenHeight * 0.285);
+                            ImGui::SetNextItemWidth(screenHeight * 0.285f);
                             ImGui::Combo("##foo", &primitiveSelected, primitives, IM_ARRAYSIZE(primitives));
 
                             // ------------------------------------------------------------------------
                             //imgui color picker for material, code from imgui demo scene
 
                             //
-                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (screenWidth * 0.02605) ) * 0.15f);
-                            ImGui::SetCursorPosY((ImGui::GetWindowHeight() - (screenHeight * 0.0463) ) * 0.945);
+                            ImGui::SetCursorPosX((ImGui::GetWindowWidth() - (screenWidth * 0.02605f) ) * 0.15f);
+                            ImGui::SetCursorPosY((ImGui::GetWindowHeight() - (screenHeight * 0.0463f) ) * 0.945f);
                             //
 
-                            if (ImGui::ColorButton("Material Color", color, window_flags_editor, ImVec2((screenWidth * 0.02605), (screenHeight * 0.0463)))) {
+                            if (ImGui::ColorButton("Material Color", color, window_flags_editor, ImVec2((screenWidth * 0.02605f), (screenHeight * 0.0463f)))) {
                                 ImGui::OpenPopup("Color Picker");
                                 backup_color = color;
                             }
@@ -817,13 +673,13 @@ int WinMain()
                 char overlay2[32];
                 sprintf_s(overlay2, "Average: %f", average2);
                 
-                ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35, screenHeight / 3), false, window_flags_child);
+                ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35f, screenHeight / 3), false, window_flags_child);
 
                 centerText("Frame Rate (FPS)");
-                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, average + (average / 10), average - (average / 10), ImVec2(screenWidth * 0.35, 350.0f));
+                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, average + (average / 10), average - (average / 10), ImVec2(screenWidth * 0.35f, 350.0f));
 
                 centerText("Milliseconds Per Frame");
-                ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, average2 + (average2 / 10), average2 - (average2 / 10), ImVec2(screenWidth * 0.35, 330.0f));
+                ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, average2 + (average2 / 10), average2 - (average2 / 10), ImVec2(screenWidth * 0.35f, 330.0f));
 
                 ImGui::EndChild();
 
@@ -864,10 +720,10 @@ int WinMain()
                 ImGui::End();
             }
 
-            float infoWidth = screenWidth * 0.5;
-            float infoHeight = screenHeight * 0.5;
+            float infoWidth = (float)screenWidth * 0.5f;
+            float infoHeight = (float)screenHeight * 0.5f;
 
-            ImGui::SetNextWindowPos(ImVec2((screenWidth - infoWidth) * 0.5, (screenHeight - infoHeight) * 0.5));
+            ImGui::SetNextWindowPos(ImVec2((screenWidth - infoWidth) * 0.5f, (screenHeight - infoHeight) * 0.5f));
             ImGui::SetNextWindowSize(ImVec2(infoWidth, infoHeight));
         }
 
@@ -996,7 +852,7 @@ void commonParameters() {
 }
 
 std::vector<sceneObject> removeElement(std::vector<sceneObject> arr, int elementIndex) {
-    std::vector<sceneObject>::iterator it = arr.begin();
+    auto it = arr.begin();
     std::advance(it, elementIndex);
     arr.erase(it);
 
@@ -1014,7 +870,7 @@ void centerText(std::string text) {
 //mouse button input
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-    
+
 }
 
 //mouse input
@@ -1114,10 +970,10 @@ void processInput(GLFWwindow* window)
         cameraPos.x = glm::mix(cameraPos.x, desiredPos.x, smoothing / 100);
         cameraPos.z = glm::mix(cameraPos.z, desiredPos.z, smoothing / 100);
 
-        cameraPos.y += velocityY * 0.01;
+        cameraPos.y += velocityY * 0.01f;
 
-        if (cameraPos.y > terrainHeight * 0.02)
-            velocityY += gravity * 0.01;
+        if (cameraPos.y > terrainHeight * 0.02f)
+            velocityY += gravity * 0.01f;
         else {
             jump = false;
             velocityY = 0.0f;

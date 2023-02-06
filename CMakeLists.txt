@@ -6,7 +6,7 @@ include(CPack)
 
 find_package(OpenGL REQUIRED)
 
-set(source_files src/Source.cpp src/Source.h src/glad.c src/Shader.h)
+set(source_files src/Source.cpp src/Source.h src/glad.c src/Shader.h src/shadersetup.h src/cameraMovement.h)
 
 include_directories("Include/glm")
 include_directories("Include/glad")
