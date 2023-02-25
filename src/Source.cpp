@@ -4,36 +4,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-//imgui libaries, for gui
-#include "imconfig.h"
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-#include "imgui_internal.h"
-
-//glad, glfw, and other fundamental library files
-#include<glad/glad.h>
-#include<GLFW/glfw3.h>
-#include<iostream>
-#include <algorithm>
-#include <string>
-#include <vector>
-
-//glm libraries, for complex math
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/vector_angle.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/matrix_decompose.hpp>
-#include <glm/gtx/string_cast.hpp>
-#include <glm/ext.hpp>
-
 //source and shader header files, for setting up variables and shader class
 #include "Source.h"
 #include "Shader.h"
 #include "cameraMovement.h"
 #include "shaderSetup.h"
+#include "input.h"
+#include "maingui.h"
 
 //window variable
 GLFWwindow* window;
@@ -105,57 +82,7 @@ int WinMain()
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-	// imgui initialization and customizing the color scheme
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    ImFont* font1 = io.Fonts->AddFontFromFileTTF("../Resources/fonts/mainfont.ttf", 24.0f, nullptr); // normal font
-    ImFont* font2 = io.Fonts->AddFontFromFileTTF("../Resources/fonts/mainfont.ttf", 12.0f, nullptr); // smaller font
-    ImFont* font3 = io.Fonts->AddFontFromFileTTF("../Resources/fonts/mainfont.ttf", 36.0f, nullptr); // larger font
-    ImFont* font4 = io.Fonts->AddFontFromFileTTF("../Resources/fonts/mainfont.ttf", 6.0f, nullptr); // smallest font
-
-    // ------------------------------------------------------------------------
-
-    auto& colors = ImGui::GetStyle().Colors;
-    colors[ImGuiCol_WindowBg] = ImVec4{ 0.1f, 0.1f, 0.1f, 1.0f};
-
-    colors[ImGuiCol_Header] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
-    colors[ImGuiCol_HeaderHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
-    colors[ImGuiCol_HeaderActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-
-    colors[ImGuiCol_Button] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
-    colors[ImGuiCol_ButtonHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
-    colors[ImGuiCol_ButtonActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-
-    colors[ImGuiCol_FrameBg] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
-    colors[ImGuiCol_FrameBgHovered] = ImVec4{ 0.3f, 0.3f, 0.3f, 1.0f };
-    colors[ImGuiCol_FrameBgActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-
-    colors[ImGuiCol_Tab] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-    colors[ImGuiCol_TabHovered] = ImVec4{ 0.38f, 0.38f, 0.38f, 1.0f };
-    colors[ImGuiCol_TabActive] = ImVec4{ 0.28f, 0.28f, 0.28f, 1.0f };
-    colors[ImGuiCol_TabUnfocused] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-    colors[ImGuiCol_TabUnfocusedActive] = ImVec4{ 0.2f, 0.2f, 0.2f, 1.0f };
-
-    colors[ImGuiCol_TitleBg] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-    colors[ImGuiCol_TitleBgActive] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-    colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.15f, 0.15f, 1.0f };
-
-    colors[ImGuiCol_PlotLines] = ImVec4(1.f, 1.f, 1.f, 1.0f);
-
-    // ------------------------------------------------------------------------
-
-    ImGuiStyle& style = ImGui::GetStyle();
-
-    style.WindowRounding = 0.0;
-    style.TabRounding = 0.0;
-    style.ScrollbarRounding = 0.0;
-    style.TabBorderSize = 1.0;
-    style.FramePadding = ImVec2(8.0, 3.0);
-
-    style.ItemSpacing = ImVec2(15.0, 4.0);
-    style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
-    
-    // ------------------------------------------------------------------------
+    styleInitialization();
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330");
@@ -167,7 +94,7 @@ int WinMain()
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         //delta time setup
-        double currentFrame = glfwGetTime();
+        float currentFrame = (float)glfwGetTime();
 
         //fixed delta time (because deltatime is not constant, meaning that it's not good for physics)
         fixedDeltaTime += (currentFrame - lastFrame) / limitFPS;
@@ -230,7 +157,7 @@ int WinMain()
         //getting framerate
         float frameRate = ImGui::GetIO().Framerate;
 
-        ImGui::SetNextWindowPos(ImVec2(screenWidth * 0.96f, screenHeight * 0.95f));
+        ImGui::SetNextWindowPos(ImVec2((float)screenWidth * 0.96f, (float)screenHeight * 0.95f));
         ImGui::SetNextWindowSize(ImVec2(150, 50));
 
         //fps counter (bottom right corner)
@@ -271,8 +198,8 @@ int WinMain()
         editorWidth = 500;
 		editorHeight = 500;
 
-        ImGui::SetNextWindowSize(ImVec2(editorWidth, editorHeight));
-        ImGui::SetNextWindowPos(ImVec2((screenWidth - editorWidth) / 2, (screenHeight - editorHeight) / 2));
+        ImGui::SetNextWindowSize(ImVec2((float)editorWidth, (float)editorHeight));
+        ImGui::SetNextWindowPos(ImVec2(((float)screenWidth - (float)editorWidth) / 2, (screenHeight - editorHeight) / 2));
 
         if (ImGui::BeginMainMenuBar()) {
 
@@ -345,8 +272,8 @@ int WinMain()
         }
 
         if (paused) {
-            ImGui::SetNextWindowPos(ImVec2(screenWidth * 0.64285f, screenHeight*0.027f));
-            ImGui::SetNextWindowSize(ImVec2(screenWidth * 0.358f, screenHeight*0.974f));
+            ImGui::SetNextWindowPos(ImVec2((float)screenWidth * 0.64285f, (float)screenHeight*0.027f));
+            ImGui::SetNextWindowSize(ImVec2((float)screenWidth * 0.358f, (float)screenHeight*0.974f));
 
             if (ImGui::Begin("Parameters", nullptr, window_flags_parameters)) {
 
@@ -358,84 +285,19 @@ int WinMain()
                 }
                 
                 if (ImGui::BeginTabBar("Parameter Tabs")) {
+
                     if (ImGui::BeginTabItem(" Ray Marching ")) {
-						
-                        rayMarching = true;
-                        inEditor = false;
-
-                        ImGui::Separator();
-                        ImGui::Text("Settings");
-                        ImGui::Separator();
-                        ImGui::PushFont(font2);
-                        ImGui::Text("");
-                        ImGui::PopFont();
-
-                        ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358f * 0.99f, screenHeight / 2.5f));
-
-                        //formatting and setting up imgui inputs for key variables
-
-                        ImGui::SliderInt(" Steps", &MAX_STEPS, 1, 1000);
-                        ImGui::SliderFloat(" Max Distance", &MAX_DIST, 0, 100);
-                        ImGui::SliderFloat(" Min Distance", &MIN_DIST, 0.001f, 0.25f);
-
-                        if (MIN_DIST == 0) {
-                            MIN_DIST = 0.001f;
-                        }
-
-                        ImGui::Text("");
-                        commonParameters();
-
-                        ImGui::Indent(64.0f);
-
-                        if (scene == 2) {
-                            ImGui::Indent(-64.0f);
-                            ImGui::Text("");
-                            ImGui::Separator();
-                            ImGui::Text("Mandelbulb");
-                            ImGui::Separator();
-                            ImGui::PushFont(font2);
-                            ImGui::Text("");
-                            ImGui::PopFont();
-
-                            ImGui::SliderFloat("Power", &power, 1, 10);
-                            ImGui::SliderInt("Iterations", &iterations, 1, 20);
-                            ImGui::Text("");
-                            ImGui::Checkbox("Animate", &animate);
-                            ImGui::Indent(32.0f);
-
-                            if (animate) {
-                                ImGui::DragFloat("Time Multiplier", &timeMultiplier, 0.001, 0, 1, nullptr, ImGuiSliderFlags_AlwaysClamp);
-                            }
-                            ImGui::Indent(32.0f);
-                        }
-                        ImGui::Indent(-64.0f);
-
-                        ImGui::EndChild();
+                        rayMarchingScene();
 
                         ImGui::EndTabItem();
-                        
-                    }//
-
-                    if (scene == 1) {
-                        if (ImGui::BeginTabItem(" Ray Tracing ")) {
-                            
-                            rayMarching = false;
-
-                            ImGui::Separator();
-                            ImGui::Text("Settings");
-                            ImGui::Separator();
-                            ImGui::PushFont(font2);
-                            ImGui::Text("");
-                            ImGui::PopFont();
-
-                            ImGui::BeginChild("Settings Child", ImVec2(screenWidth * 0.358f * 0.99f, screenHeight / 2.5f));
-
-                            commonParameters();
-
-                            ImGui::EndChild();
-                            ImGui::EndTabItem();
-                        }
                     }
+
+                    if (ImGui::BeginTabItem(" Ray Tracing ") && scene == 1) {
+                        rayTracingScene();
+
+                        ImGui::EndTabItem();
+                    }
+
 
                     if (scene == 3) {
                         if (ImGui::BeginTabItem(" Editor Settings ")){
@@ -714,6 +576,7 @@ int WinMain()
                 }
 
                 ImGui::Separator();
+
                 }
 
                 ImGui::PopStyleVar();
@@ -800,57 +663,6 @@ int WinMain()
     return 0;
 }
 
-void commonParameters() {
-    ImGui::Checkbox("Anti-Aliasing (SSAA 4X)", &antiAliasing);
-    ImGui::Text("");
-
-    ImGui::Checkbox("Lighting", &useLighting);
-    ImGui::Indent(32.0f);
-
-    if (useLighting) {
-
-        if (scene != 4) {
-            ImGui::InputFloat3("Light Position", &lightPosition.x);
-        }
-
-        ImGui::Checkbox("Ambient Occlusion", &ambientOcclusion);
-        ImGui::Indent(32.0f);
-        if (ambientOcclusion)
-            ImGui::SliderInt("Samples", &occlusionSamples, 1, 50);
-        ImGui::Unindent(32.0f);
-        ImGui::Checkbox("Reflections", &reflections);
-        ImGui::Indent(32.0f);
-
-        if (reflections) {
-            ImGui::SliderFloat("Visibility", &reflectionVisibility, 0.0f, 1.0f);
-
-            if (!rayMarching) ImGui::SliderInt("Count", &reflectionCount, 2, 5);
-        }
-
-        ImGui::Unindent(64.0f);
-    }
-    else
-        ImGui::Indent(-32.0f);
-
-    ImGui::Checkbox("Fog", &fogEnabled);
-
-    if (fogEnabled) {
-        ImGui::Indent(32.0f);
-        ImGui::SliderFloat("Fog Visibility", &fogVisibility, 0.0f, 1.0f);
-
-        int intFalloff = (int)falloff;
-        ImGui::SliderInt("Fog Falloff", &intFalloff, 10, 100);
-        falloff = (float)intFalloff;
-
-        ImGui::Unindent(32.0f);
-    }
-
-    if (scene == 5) {
-        ImGui::Text("");
-        ImGui::SliderFloat(" Smoothness", &smoothness, 0, 1);
-    }
-}
-
 std::vector<sceneObject> removeElement(std::vector<sceneObject> arr, int elementIndex) {
     auto it = arr.begin();
     std::advance(it, elementIndex);
@@ -867,122 +679,5 @@ void centerText(std::string text) {
     ImGui::Text(text.c_str());
 }
 
-//mouse button input
-void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
-{
 
-}
 
-//mouse input
-void mouse_callback(GLFWwindow* window, double xposInput, double yposInput)
-{
-    float xpos = static_cast<float>(xposInput);
-    float ypos = static_cast<float>(yposInput);
-
-    if (firstMouse){
-        lastX = xpos;
-        lastY = ypos;
-        firstMouse = false;
-    }
-
-    float xoffset, yoffset;
-
-    if (!paused) {
-        xoffset = xpos - lastX;
-        yoffset = lastY - ypos;
-    }
-    else {
-        xoffset = 0;
-        yoffset = 0;
-    }
-
-    lastX = xpos;
-    lastY = ypos;
-
-    float sensitivity = 0.1f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    yaw += xoffset;
-    pitch += yoffset;
-
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(front);
-}
-
-//mouse scroll whell input
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
-    
-}
-
-//keyboard input
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if (key == GLFW_KEY_ESCAPE && action == 1) {
-        paused = !paused;
-    }
-}
-
-//input (called every frame)
-void processInput(GLFWwindow* window) 
-{
-    if (!paused) {
-        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
-            cameraSpeed = glm::mix(cameraSpeed, (runSpeed / 2) * movementMultiplier, runSmoothing / 10);
-        }
-        else {
-            cameraSpeed = glm::mix(cameraSpeed, (walkSpeed / 2) * movementMultiplier, runSmoothing / 10);
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-            desiredPos += (cameraSpeed)*glm::normalize(glm::vec3(direction.x, 0.0f, direction.z));
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-            desiredPos -= (cameraSpeed)*glm::normalize(glm::vec3(direction.x, 0.0f, direction.z));
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-            desiredPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * (cameraSpeed);
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-            desiredPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * (cameraSpeed);
-        }
-
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-            if (!jump) {
-                jump = true;
-                velocityY += jumpHeight;
-            }
-        }
-
-        //camera smoothing
-        cameraPos.x = glm::mix(cameraPos.x, desiredPos.x, smoothing / 100);
-        cameraPos.z = glm::mix(cameraPos.z, desiredPos.z, smoothing / 100);
-
-        cameraPos.y += velocityY * 0.01f;
-
-        if (cameraPos.y > terrainHeight * 0.02f)
-            velocityY += gravity * 0.01f;
-        else {
-            jump = false;
-            velocityY = 0.0f;
-        }
-    }
-}
-
-//window refresh
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}

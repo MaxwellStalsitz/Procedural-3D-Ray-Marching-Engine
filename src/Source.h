@@ -1,11 +1,30 @@
-#pragma once
+#ifndef SOURCE_H
+#define SOURCE_H
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
+//imgui libaries, for gui
+#include "imconfig.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_internal.h"
 
-#include "Shader.h"
-
+//glad, glfw, and other fundamental library files
+#include<glad/glad.h>
+#include<GLFW/glfw3.h>
+#include<iostream>
+#include <algorithm>
+#include <string>
 #include <vector>
+
+//glm libraries, for complex math
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/vector_angle.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
+#include <glm/gtx/string_cast.hpp>
+#include <glm/ext.hpp>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
@@ -115,3 +134,5 @@ unsigned int indices[] = {
     0, 1, 3, 
     1, 2, 3 
 };
+
+#endif
