@@ -49,8 +49,8 @@ bool inEditor = false;
 static bool inInfoMenu = false;
 
 //screen width and height
-unsigned int screenWidth = 1920;
-unsigned int screenHeight = 1080;
+ int screenWidth = 1920;
+ int screenHeight = 1080;
 
 // ------------------------------------------------------------------------
 void commonParameters();

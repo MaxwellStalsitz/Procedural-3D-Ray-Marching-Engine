@@ -158,7 +158,7 @@ int WinMain()
         float frameRate = ImGui::GetIO().Framerate;
 
         ImGui::SetNextWindowPos(ImVec2((float)screenWidth * 0.96f, (float)screenHeight * 0.95f));
-        ImGui::SetNextWindowSize(ImVec2(150, 50));
+        ImGui::SetNextWindowSize(ImVec2((float)screenWidth * 0.139f, (float)screenHeight * 0.02604f));
 
         //fps counter (bottom right corner)
         if (!paused) {
@@ -173,6 +173,7 @@ int WinMain()
         if (selectedItem == 0) {
             screenWidth = 1280;
             screenHeight = 720;
+
         }
         if (selectedItem == 1) {
             screenWidth = 1920;
@@ -182,11 +183,16 @@ int WinMain()
             screenWidth = 2560;
             screenHeight = 1440;
         }
-		
+
+        glfwSetWindowSize(window, screenWidth, screenHeight);
+
+        //some devices automatically set a certain resolution upon change, so this call updates the screenWidth & screenHeight values
+        glfwGetWindowSize(window, &screenWidth, &screenHeight);
+
         // ------------------------------------------------------------------------
 
-        float editorWidth = 400;
-        float editorHeight = 500;
+        float editorWidth = 0.2083 * screenWidth;
+        float editorHeight = 0.26042 * screenHeight;
 
         if (!start) {
             ImGui::SetNextWindowSize(ImVec2(editorWidth, editorHeight));
@@ -272,8 +278,8 @@ int WinMain()
         }
 
         if (paused) {
-            ImGui::SetNextWindowPos(ImVec2((float)screenWidth * 0.64285f, (float)screenHeight*0.027f));
-            ImGui::SetNextWindowSize(ImVec2((float)screenWidth * 0.358f, (float)screenHeight*0.974f));
+            ImGui::SetNextWindowPos(ImVec2((float)screenWidth*0.64285f, 30.0f));
+            ImGui::SetNextWindowSize(ImVec2((float)screenWidth*0.358f, (float)screenHeight*0.974f + 30.0f));
 
             if (ImGui::Begin("Parameters", nullptr, window_flags_parameters)) {
 
@@ -363,7 +369,7 @@ int WinMain()
                                     ImGui::SameLine();
 
                                     static const char* primitives[]{ "Sphere", "Box", "Torus", "Octahedron", "Round Box", "Box Frame" };
-                                    ImGui::SetNextItemWidth(screenHeight * 0.285f);
+                                    ImGui::SetNextItemWidth(screenWidth * 0.285f);
 
                                     ImGui::Combo("##foo", &changedPrimitive, primitives, IM_ARRAYSIZE(primitives));
 
@@ -438,7 +444,7 @@ int WinMain()
                             ImGui::SetCursorPosX((ImGui::GetWindowWidth() - textWidth) / 1.25f);
 
                             static const char* primitives[]{ "Sphere", "Box", "Torus", "Octahedron", "Round Box", "Box Frame" };
-                            ImGui::SetNextItemWidth(screenHeight * 0.285f);
+                            ImGui::SetNextItemWidth(screenWidth * 0.285f);
                             ImGui::Combo("##foo", &primitiveSelected, primitives, IM_ARRAYSIZE(primitives));
 
                             // ------------------------------------------------------------------------
@@ -538,10 +544,10 @@ int WinMain()
                 ImGui::BeginChild("Graphs", ImVec2(screenWidth * 0.35f, screenHeight / 3), false, window_flags_child);
 
                 centerText("Frame Rate (FPS)");
-                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, average + (average / 10), average - (average / 10), ImVec2(screenWidth * 0.35f, 350.0f));
+                ImGui::PlotLines("", values, IM_ARRAYSIZE(values), values_offset, overlay, average + (average / 10), average - (average / 10), ImVec2(screenWidth * 0.35f, screenHeight * 0.3241f));
 
                 centerText("Milliseconds Per Frame");
-                ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, average2 + (average2 / 10), average2 - (average2 / 10), ImVec2(screenWidth * 0.35f, 330.0f));
+                ImGui::PlotLines("", values2, IM_ARRAYSIZE(values2), values_offset2, overlay2, average2 + (average2 / 10), average2 - (average2 / 10), ImVec2(screenWidth * 0.35f, screenHeight * 0.3056f));
 
                 ImGui::EndChild();
 
