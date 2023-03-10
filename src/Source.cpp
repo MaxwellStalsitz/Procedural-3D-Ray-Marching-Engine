@@ -174,14 +174,19 @@ int WinMain()
             screenWidth = 1280;
             screenHeight = 720;
 
+            ImGui::GetIO().FontGlobalScale = 0.6666666666666f;
         }
         if (selectedItem == 1) {
             screenWidth = 1920;
             screenHeight = 1080;
+
+            ImGui::GetIO().FontGlobalScale = 1.0;
         }
         if (selectedItem == 2) {
             screenWidth = 2560;
             screenHeight = 1440;
+
+            ImGui::GetIO().FontGlobalScale = 1.33333333333f;
         }
 
         glfwSetWindowSize(window, screenWidth, screenHeight);
@@ -278,8 +283,11 @@ int WinMain()
         }
 
         if (paused) {
-            ImGui::SetNextWindowPos(ImVec2((float)screenWidth*0.64285f, 30.0f));
-            ImGui::SetNextWindowSize(ImVec2((float)screenWidth*0.358f, (float)screenHeight*0.974f + 30.0f));
+            ImGuiStyle& style = ImGui::GetStyle();
+            float titleBarHeight = (style.WindowPadding.y - 3) + ImGui::GetFontSize();
+
+            ImGui::SetNextWindowPos(ImVec2((float)screenWidth*0.64285f, titleBarHeight));
+            ImGui::SetNextWindowSize(ImVec2((float)screenWidth*0.358f, (float)screenHeight + titleBarHeight));
 
             if (ImGui::Begin("Parameters", nullptr, window_flags_parameters)) {
 
