@@ -1,8 +1,8 @@
 # Procedural-3D-Ray-Marching-Engine
 
-Realtime OpenGL rendering engine that has support for ray marching and ray tracing rendering. Provides means for comparing performance metrics between the two rendering methods, along with providing support for examples and custom scenes using ray marching.
+Realtime OpenGL rendering engine that has support for ray marching and ray tracing rendering. Provides means for comparing performance metrics between the two rendering methods, along with providing support for examples and custom scenes using ray marching, based on custom signed distance functions.
 
-Engine interface created using [Dear ImGui](https://github.com/ocornut/imgui).
+Engine interface created using [Dear ImGui](https://github.com/ocornut/imgui). In order to run the engine, you must download [CMake](https://cmake.org/download/)
 
 ## **Features**
 * Ray marching and Ray tracing rendering
@@ -12,7 +12,7 @@ Engine interface created using [Dear ImGui](https://github.com/ocornut/imgui).
 * Performance metrics (graphs) and custom parameters
 
 ## **Lighting Effects**
-* Antialiasing
+* Antialiasing (SSAAx4)
 * Ambient Occlusion
 * Reflections
 * Phong lighting model
