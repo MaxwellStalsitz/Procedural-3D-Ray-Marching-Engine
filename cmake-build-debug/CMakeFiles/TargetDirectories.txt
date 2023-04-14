@@ -1,6 +1,0 @@
-C:/Users/maxst/Documents/Procedural-3D-Ray-Marching-Engine/cmake-build-debug/CMakeFiles/imgui.dir
-C:/Users/maxst/Documents/Procedural-3D-Ray-Marching-Engine/cmake-build-debug/CMakeFiles/OpenGL_Rendering_Engine.dir
-C:/Users/maxst/Documents/Procedural-3D-Ray-Marching-Engine/cmake-build-debug/CMakeFiles/package.dir
-C:/Users/maxst/Documents/Procedural-3D-Ray-Marching-Engine/cmake-build-debug/CMakeFiles/package_source.dir
-C:/Users/maxst/Documents/Procedural-3D-Ray-Marching-Engine/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/maxst/Documents/Procedural-3D-Ray-Marching-Engine/cmake-build-debug/CMakeFiles/rebuild_cache.dir
