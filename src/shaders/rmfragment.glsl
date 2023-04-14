@@ -50,45 +50,40 @@ uniform float smoothness;
 
 #define PI 3.1415926535897932384626433832795
 
-#define GRAY 1;
-#define TILE 2;
-#define RED 3;
-#define GREEN 4;
-#define BLUE 5;
-#define WHITE 6;
+#define GRAY 1
+#define TILE 2
+#define RED 3
+#define GREEN 4
+#define BLUE 5
+#define WHITE 6
 
 //----------------------------------------------------------------------
 vec3 background;
 //----------------------------------------------------------------------
 
-vec2 mergeResults(vec2 res1, vec2 res2) //determines if a something is between two objects
-{
+vec2 mergeResults(vec2 res1, vec2 res2) { //determines if a something is between two objects
     return (res1.x < res2.x) ? res1 : res2;
 }
 
-vec2 smoothMinimum(vec2 a, vec2 b, float k)
-{
+vec2 smoothMinimum(vec2 a, vec2 b, float k) {
     float h = clamp(0.5+0.5*(b.x-a.x)/k, 0.0,1.0);
 	float material = (a.x < b.x) ? a.y : b.y;
     return vec2(mix(b.x, a.x, h)-k*h*(1.0-h), material);
 }
 
-vec2 differenceInResults(vec2 res1, vec2 res2)
-{
+vec2 differenceInResults(vec2 res1, vec2 res2) {
 	return (res1.x > -res2.x) ? res1 : vec2(-res2.x, res2.y);
 }
 
 //----------------------------------------------------------------------
 //distance functions (from inigo quilez)
 
-float sdBox( vec3 p, vec3 b )
-{
+float sdBox( vec3 p, vec3 b ) {
   vec3 q = abs(p) - b;
   return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
 }
 
-float sdBoxFrame( vec3 p, vec3 b, float e )
-{
+float sdBoxFrame( vec3 p, vec3 b, float e ) {
     p = abs(p  )-b;
 	vec3 q = abs(p+e)-e;
 	return min(min(
@@ -97,36 +92,33 @@ float sdBoxFrame( vec3 p, vec3 b, float e )
     length(max(vec3(q.x,q.y,p.z),0.0))+min(max(q.x,max(q.y,p.z)),0.0));
 }
 
-float sdSphere(vec3 p, float s)
-{
+float sdSphere(vec3 p, float s) {
   return length(p)-s;
 }
 
-float sdRoundBox( vec3 p, vec3 b, float r )
-{
+float sdRoundBox( vec3 p, vec3 b, float r ) {
   vec3 q = abs(p) - b;
   return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0) - r;
 }
 
-float sdTorus( vec3 p, vec2 t ) //t = inner radius
-{
-  vec2 q = vec2(length(p.xz)- 
+float sdTorus( vec3 p, vec2 t ) { //t = inner radius
+  vec2 q = vec2(length(p.xz)-
   t.x,p.y);
   return length(q)-t.y;
- }
+}
 
-float sdOctahedron( vec3 p, float s)
-{
+float sdOctahedron( vec3 p, float s) {
   p = abs(p);
   float m = p.x+p.y+p.z-s;
   vec3 q;
-       if( 3.0*p.x < m ) q = p.xyz;
+
+  if( 3.0*p.x < m ) q = p.xyz;
   else if( 3.0*p.y < m ) q = p.yzx;
   else if( 3.0*p.z < m ) q = p.zxy;
   else return m*0.57735027;
-    
-  float k = clamp(0.5*(q.z-q.y+s),0.0,s); 
-  return length(vec3(q.x,q.y-s+k,q.z-k)); 
+
+  float k = clamp(0.5*(q.z-q.y+s),0.0,s);
+  return length(vec3(q.x,q.y-s+k,q.z-k));
 }
 
 //----------------------------------------------------------------------
@@ -135,16 +127,16 @@ float sdOctahedron( vec3 p, float s)
 vec3 rotateX(vec3 p, float a) {
     return vec3(p.x, cos(a) * p.y - sin(a) * p.z, sin(a) * p.y + cos(a) * p.z);
 }
-    
+
 vec3 rotateY(vec3 p, float a) {
     return vec3(cos(a) * p.x + sin(a) * p.z, p.y, -sin(a) * p.x + cos(a) * p.z);
 }
 
-float maxVec3(vec3 v){ // returns largest component in vec3
+float maxVec3(vec3 v) { // returns largest component in vec3
 	return max(max(v.x,v.y), v.z);
 }
 
-float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale, vec3 rotation){
+float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale, vec3 rotation) {
 	float dist;
 
 	mat4 scaleMatrix = mat4(
@@ -157,7 +149,7 @@ float customDistance(int primitive, vec3 rayPosition, vec3 position, vec3 scale,
 	float x = rotation.x * PI / 180.0f;
     float y = rotation.y * PI / 180.0f;
     float z = rotation.z * PI / 180.0f;
-	
+
     mat4 rotationMatrix = mat4(
 		vec4(cos(y) * cos(z), -cos(y) * sin(z), sin(y), 0.0f),
 		vec4(cos(x) * sin(z) + sin(x) * sin(y) * cos(z), cos(x) * cos(z) - sin(x) * sin(y) * sin(z), -sin(x) * cos(y), 0.0f),
@@ -227,12 +219,11 @@ vec2 customScene(vec3 rayPosition, inout vec3 material){
 
 		result = mergeResults(result, newPrimitive);
 	}
-	
+
 	return result;
 }
 
-vec2 demoScene(vec3 pos)
-{
+vec2 demoScene(vec3 pos) {
 	float distanceToSDF;
 
 	float ID = GREEN;
@@ -249,7 +240,7 @@ vec2 demoScene(vec3 pos)
 	position = vec3(-3.0, -0.25, -3.0);
 	distanceToSDF = sdBoxFrame(pos-position, vec3(0.75, 0.75, 0.75), 0.05);
 	vec2 box = vec2(distanceToSDF, ID);
-	
+
 	ID = TILE;
 	float planeDistance = pos.y + 1.0;
 	distanceToSDF = planeDistance;
@@ -276,7 +267,7 @@ vec2 manyEntityScene(vec3 pos){
 	result = plane;
 
 	for (int i = 0; i < 100; i++){
-		
+
 		// makes a 10x10 row of spheres
 		float x = float(i % 10) * 2.5;
 		float z = float(i / 10) * 2.5;
@@ -328,7 +319,7 @@ vec2 cornellBox(vec3 pos){
 	ID = 1.0;
 	float smallBox = sdBox(rotateY(pos + vec3(1.5, 1.0, 0.0), -65.0 * PI / 180.0), vec3(1.0, 1.0, 1.0));
 	vec2 smallSDF = vec2(smallBox, ID);
-	
+
 	vec2 result = backSDF;
 
 	result = mergeResults(result, leftSDF);
@@ -342,46 +333,43 @@ vec2 cornellBox(vec3 pos){
 	return result;
 }
 
-vec2 mandelbulb(vec3 pos) 
+vec2 mandelbulb(vec3 pos)
 {
-	vec3 z = pos;
+	vec3 position = vec3(0,0.5,0);
+	vec3 z = pos-position;
 	vec3 dz=vec3(0.0);
 	float r, theta, phi;
 	float dr = 1.0;
-	
+
 	float t0 = 1.0;
 	for(int i = 0; i < iterations; ++i) {
 		r = length(z);
 		if(r > 2.0) continue;
 		theta = atan(z.y / z.x);
-		
+
         if (animate)
 			phi = asin(z.z / r) + (time*timeMultiplier);
         else
 			phi = asin(z.z / r);
-		
+
 		dr = pow(r, power - 1.0) * dr * power + 1.0;
-	
+
 		r = pow(r, power);
 		theta = theta * power;
 		phi = phi * power;
-		
-		z = r * vec3(cos(theta)*cos(phi), sin(theta)*cos(phi), sin(phi)) + pos;
-		
+
+		z = r * vec3(cos(theta)*cos(phi), sin(theta)*cos(phi), sin(phi)) + (pos-position);
+
 		t0 = min(t0, r);
 	}
-	return vec2(0.5 * log(r) * r / dr, 1.0);
-}
 
-//----------------------------------------------------------------------
-//signed distance function operations
+	vec2 mandelBulbSDF = vec2(0.5 * log(r) * r / dr, 6.0);
 
-float subtractResult(float res1, float res2){ 
-	return max(-res1, res2); 
-}
+	position = vec3(0.0, -1.5, 0.0);
+	float distanceToSDF = sdBox(pos-position, vec3(10, 0.5, 10));
+	vec2 baseBox = vec2(distanceToSDF, WHITE);
 
-float intersectResult(float res1, float res2 ){ 
-	return max(res1, res2); 
+	return mergeResults(baseBox, mandelBulbSDF);
 }
 
 //----------------------------------------------------------------------
@@ -434,7 +422,7 @@ vec2 distanceOperationsExample(vec3 pos, inout vec3 material){
 
 	if (result.x != -1.0){
 		ratio = clamp(0.5 + 0.5 * (sphere.x - result.x)/1.0, 0.0, 1.0);
-		result = smoothMinimum(result, sphere, smoothness);
+		result = smoothMinimum(result, sphere, smoothness); //smooth minimum between two spheres
 	}
 
 	vec3 m = vec3(0.61, 0.176, 0.176);
@@ -445,8 +433,8 @@ vec2 distanceOperationsExample(vec3 pos, inout vec3 material){
 
 //choosing map function based on scene
 vec2 map(vec3 rayPosition, inout vec3 material) //with custom scene material
-{	
-	
+{
+
 	vec2 result;
 
 	switch(scene){
@@ -465,17 +453,20 @@ vec2 map(vec3 rayPosition, inout vec3 material) //with custom scene material
 		case(5):
 			result = distanceOperationsExample(rayPosition, material);
 			break;
+		case(6):
+			result = manyEntityScene(rayPosition);
+			break;
 	}
-	
+
 	return result;
 }
 
 vec2 map(vec3 rayPosition) //without custom scene material
 {
 	vec2 result;
-	vec3 material;
+	vec3 material = vec3(0);
 
-	switch(scene){
+	switch(scene){ //load distance scene function based on the current scene
 		case (1):
 			result = demoScene(rayPosition);
 			break;
@@ -490,6 +481,9 @@ vec2 map(vec3 rayPosition) //without custom scene material
 			break;
 		case(5):
 			result = distanceOperationsExample(rayPosition, material);
+			break;
+		case(6):
+			result = manyEntityScene(rayPosition);
 			break;
 	}
 
@@ -499,11 +493,11 @@ vec2 map(vec3 rayPosition) //without custom scene material
 //----------------------------------------------------------------------
 
 //getting material from material id
-vec3 getMaterial(vec3 p, float id) 
+vec3 getMaterial(vec3 p, float id)
 {
     vec3 m;
 
-	if (id == 1.0) // gray
+	if (id == 1.0) // white
 		m = vec3(1.0, 1.0, 1.0);
 	else if (id == 2.0) // tile
 		m = mix(vec3(0.0 + 1.0 * mod(floor(p.x) + floor(p.z), 2.0)), vec3(0.773, 0.725, 0.627), 0.5); //from inigo quilez
@@ -514,7 +508,7 @@ vec3 getMaterial(vec3 p, float id)
 	else if (id == 5.0)
 		m = vec3(0.247, 0.427, 0.819); // blue
 	else if (id == 6.0)
-		m = vec3(0.851, 0.851, 0.851);
+		m = vec3(0.851, 0.851, 0.851); //sorta whie
 
     return m;
 }
@@ -547,8 +541,9 @@ vec3 calcNormal(vec3 position)
 {
 	float dist = map(position).x;
 
-	//i use map.x in order to only get the distance instead of a vec2 with a material id
+	//map.x is used in order to only get the distance travelled, compared to using map (vec2) with a material id
 
+	//this estimates normal values
 	return normalize(vec3(
 		(map(vec3(position.x + 0.0001f, position.y, position.z)) - dist).x,
 		(map(vec3(position.x, position.y + 0.0001f, position.z)) - dist).x,
@@ -571,26 +566,21 @@ float softshadow(vec3 ro, vec3 rd, float mint, float maxt, float k)
 
 		if (h > MAX_DIST)
 			break;
-			
+
         dist += h;
     }
     return res;
 }
 
-//calculating uv
-vec2 getUV(vec2 offset){
-	return ((gl_FragCoord.xy + offset) - 0.5 * resolution.xy) / resolution.y;
-}
-
 //ray marching pass for calculating standard and reflection values
 vec2 rayMarch(vec3 ro, vec3 rd, inout vec3 material){
     float t = 0.0; //total distance travelled
-	float id;
-	
+	float id; //material id
+
     for(int i = 0; i < MAX_STEPS; i++) {
-        vec3 pos = ro + t * rd; // hit point
-        vec2 m = map(pos, material);
-		
+        vec3 pos = ro + t * rd; // hit point, found by moving forward based on the rayDirection
+        vec2 m = map(pos, material); //scene function, taking in hit point
+
         if(m.x <= MIN_DIST){ //hit detected
 			id = m.y;
             return vec2(t, id);
@@ -599,7 +589,7 @@ vec2 rayMarch(vec3 ro, vec3 rd, inout vec3 material){
 		if (abs(m.x) > MAX_DIST)
 			break;
 
-        t += m.x;
+        t += m.x; //total distance increased
     }
 
 	return vec2(-1.0, -1.0); // hit sky
@@ -607,25 +597,29 @@ vec2 rayMarch(vec3 ro, vec3 rd, inout vec3 material){
 
 //color function, using phong lighting model and all other effects
 vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t, vec3 customMaterial){
-	vec3 col;
-	
+	vec3 col; // final vec3 color return value
+
 	vec3 normal = calcNormal(rayOrigin);
 
-	vec3 lp;
+	vec3 lp; //light position that is dependent on scene
 	if (scene != 4)
 		lp = lightPosition;
-	else 
-		lp = vec3(0.5, 5.5, -5.0);
+	else
+		lp = vec3(0.5, 5.5, -5.0); //cornell box has fixed light position
 
-	vec3 light = normalize(lp - rayOrigin);
-	vec3 H = reflect(-light, normal);
-	vec3 V = -rayDirection;
+	//important phong lighting vectors
+	vec3 light = normalize(lp - rayOrigin); // the direction from the hit point towards the light source
+	vec3 H = reflect(-light, normal); // the ray that is being reflected off the hit point
+	vec3 V = -rayDirection; //direction from the point to the camera
+
+	//more info: https://en.wikipedia.org/wiki/Phong_reflection_model#/media/File:Blinn_Vectors.svg
+	// (N = normal, R = rayDirection)
 
 	vec3 specularColor = vec3(0.5);
 	float specularPower = 10.0;
-	vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower);
+	vec3 specular = specularColor * pow(clamp(dot(H, V), 0.0, 1.0), specularPower); // specular lighting
 
-	vec3 material;
+	vec3 material; //material found on hit point (identified by material ID)
 
 	if (t.y != 0.0)
 		material = getMaterial(rayOrigin, t.y);
@@ -635,27 +629,21 @@ vec3 calcColor(vec3 rayOrigin, vec3 rayDirection, vec2 t, vec3 customMaterial){
 	float diffuse;
 	diffuse = clamp(dot(normal, normalize(lp - rayOrigin)), 0.0, 1.0);
 	diffuse *= 5.0 / dot(light - rayOrigin, light - rayOrigin);
-	vec3 ambient = material * 0.25;
+
+	vec3 ambient = material * 0.25; // ambient lighting constant
 
 	float fresnel = 0.25 * pow(1.0 + dot(rayDirection, normal), 3.0);
 
-	float occ;
+	float occ = (ambientOcclusion) ? getOcclusion(rayOrigin, normal) : 1; //calculates if ambient occlusion is enabled
 
-	if (ambientOcclusion)
-		occ = getOcclusion(rayOrigin, normal);
-	else
-		occ = 1;
+	vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0); // back lighting
 
-	vec3 back = vec3(1) * 0.05 * clamp(dot(normal, -light), 0.0, 1.0);
+	float ss = softshadow(rayOrigin + normal * 0.025, light, 0.01, MAX_STEPS, 14); //soft shadows
 
-	float d = softshadow(rayOrigin + normal * 0.025, light, 0.01, MAX_STEPS, 14);
-		
-	float diff = max(dot(calcNormal(rayOrigin), light), 0.);
-
-	col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * d);
+	col = material * ((back + ambient + fresnel) * occ + (vec3(pow(diffuse, 0.4545)) + (specular * occ)) * ss);
 
 	if (fogEnabled){
-		float fog = smoothstep(4.0, falloff, t.x) * fogVisibility;
+		float fog = smoothstep(4.0, falloff, t.x) * fogVisibility; //smooth fog transition based on hit distance
 		col = mix(col, background, fog);
 	}
 
@@ -666,23 +654,23 @@ vec3 render(vec2 uv)
 {
 	vec3 rayOrigin;
 
-	if (scene == 1 || scene == 3 || scene == 5){
-		background = vec3(0.5,0.7,0.9);
-	}
-	else
-		background = vec3(1.0,1.0,1.0);
+	background = (scene == 1 || scene == 3 || scene == 5 || scene == 6) ? vec3(0.5,0.7,0.9) : vec3(1.0,1.0,1.0); //blank background for certain scenes
 
-	if (scene != 4)
-		rayOrigin = cameraPos;
-	else
-		rayOrigin = vec3(0.0, 2.0, -9.0);
+	vec3 position;
 
-	//the direction of our ray, which is computed for every single pixel of the screen (which is also fragCoord.xy/the fragment COORDINATES (one for every pixel))
+	if (scene != 4) //cornell box scene has fixed position
+		position = cameraPos;
+	else
+		position = vec3(0.0, 2.0, -9.0);
+
+	rayOrigin = position;
+
+	//the direction of our ray, which is computed for every single pixel of the screen (which is also fragCoord.xy/the fragment coordinates (one for every pixel))
 	vec3 rayDirection;
-	
+
 	if (scene != 4)
 		rayDirection = getCam(rayOrigin) * normalize(vec3(uv, FOV));
-	else{
+	else{ //specific camera orientation for cornell box scene
 		vec3 cu = vec3(0, 1, 0);
 		vec3 cv = vec3(0.0, 0.0, 1.0);
 		vec3 rov = normalize(cv-rayOrigin);
@@ -691,15 +679,16 @@ vec3 render(vec2 uv)
 		rayDirection = normalize(rov + u*uv.x + v*uv.y);
 	}
 
-	vec2 t;
+	vec2 t; //t = total distance traveled (vec2 because t.y = material id of surface hit)
+
 	vec3 customMaterial;
 	t = rayMarch(rayOrigin, rayDirection, customMaterial);
 
-	rayOrigin += rayDirection * t.x;
+	rayOrigin += rayDirection * t.x; // move ray origin to hit point
 
-	vec3 sceneColor;
-	
-	if (t.y != -1.0){
+	vec3 sceneColor; //final returned color vector
+
+	if (t.y != -1.0){ //material id is not equal to the background
 		if (useLighting){
 
 			//phong lighting (with gamma correction)
@@ -708,48 +697,55 @@ vec3 render(vec2 uv)
 			if (reflections){
 				rayDirection = reflect(rayDirection, calcNormal(rayOrigin));
 
+				//marching from the hit point once more to be mapped back onto the original hit point
 				t = rayMarch(rayOrigin + rayDirection * MIN_DIST, rayDirection, customMaterial);
-				
+
+				//moving ray origin, as done before
 				rayOrigin += rayDirection * t.x;
 
 				if (rayOrigin.y > -0.99 && t.y == -1.0)
-					sceneColor += background * reflectionVisibility;
-				else{
+					sceneColor += (background * reflectionVisibility); //colors for background inside reflections
+				else if (t.y != -1.0){
+					//applying the new color at the new hit point onto the original surface
 					sceneColor += calcColor(rayOrigin, rayDirection, t, customMaterial) * reflectionVisibility;
 				}
-					
+
 			}
 		}
-		else{
+		else{ // no lighting
 			sceneColor = getMaterial(rayOrigin, t.y);
 
-			if (t.y == 0.0) 
+			if (t.y == 0.0)
 				sceneColor = customMaterial;
 
-			if (fogEnabled){
-				float fog = smoothstep(4.0, falloff, t.x);
+			if (fogEnabled){ //fog still present without lighting
+				float fog = smoothstep(4.0, falloff, t.x) * fogVisibility; //smooth fog transition based on hit distance
 				sceneColor = mix(sceneColor, background, fog);
 			}
 		}
 	}
-	else{
-		sceneColor += background;
+	else{ //does not hit anything; background
+		sceneColor = background;
 	}
 
 	return sceneColor;
 }
 
+//calculating uv
+vec2 getUV(vec2 offset){
+	return ((gl_FragCoord.xy + offset) - 0.5 * resolution.xy) / resolution.y;
+}
 
-void main() 
-{
+void main() {
 	vec3 col;
 
 	//optional anti aliasing, using 4 samples per pixel, essentially scaling the visuals by 4 (much more performance intensive)
 	if (antiAliasing){
+		col = render(getUV(vec2(0.125, 0.375)));
 		col += render(getUV(vec2(0.125, -0.375)));
-		col += render(getUV(vec2(-0.125, 0.375)));
+		col += render(getUV(vec2(-0.375, -0.125)));
 		col += render(getUV(vec2(-0.375, 0.125)));
-		col += render(getUV(vec2(0.375, -0.125)));
+
 		col /= 4.0;
 	}
 	else{
@@ -757,5 +753,5 @@ void main()
 		col = render(uv);
 	}
 
-	FragColor = vec4(col, 1);
+	FragColor = vec4(col, 1.0);
 }

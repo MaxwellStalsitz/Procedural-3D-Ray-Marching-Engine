@@ -63,9 +63,31 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 }
 
+void lockCamera(){
+    if (scene == 2 || scene == 5){
+        float maxX = 9.99f;
+        float maxZ = 9.99f;
+
+        if (desiredPos.x > maxX || cameraPos.x > maxX) {
+            desiredPos.x = maxX;
+        }
+        else if (desiredPos.x < -maxX || cameraPos.x < -maxX) {
+            desiredPos.x = -maxX;
+        }
+        else if (desiredPos.z > maxZ || cameraPos.z > maxZ) {
+            desiredPos.z = maxZ;
+        }
+        else if (desiredPos.z < -maxZ || cameraPos.z < -maxZ) {
+            desiredPos.z = -maxZ;
+        }
+    }
+}
+
 //input (called every frame)
 void processInput(GLFWwindow* window)
 {
+    lockCamera();
+
     if (!paused) {
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
             cameraSpeed = glm::mix(cameraSpeed, (runSpeed / 2) * movementMultiplier, runSmoothing / 10);
@@ -97,9 +119,7 @@ void processInput(GLFWwindow* window)
             }
         }
 
-        //camera smoothing
-        cameraPos.x = glm::mix(cameraPos.x, desiredPos.x, smoothing / 100);
-        cameraPos.z = glm::mix(cameraPos.z, desiredPos.z, smoothing / 100);
+        lockCamera();
 
         cameraPos.y += velocityY * 0.01f;
 

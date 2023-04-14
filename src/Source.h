@@ -9,9 +9,10 @@
 #include "imgui_internal.h"
 
 //glad, glfw, and other fundamental library files
-#include<glad/glad.h>
-#include<GLFW/glfw3.h>
-#include<iostream>
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <iostream>
+#include <cstdlib>
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -33,8 +34,8 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 void processInput(GLFWwindow* window);
-
 void centerText(std::string text);
+void defaultsButton();
 
 unsigned int texture;
 
@@ -49,8 +50,12 @@ bool inEditor = false;
 static bool inInfoMenu = false;
 
 //screen width and height
- int screenWidth = 1920;
- int screenHeight = 1080;
+int screenWidth = 1920;
+int screenHeight = 1080;
+
+bool fpsCap = true;
+int frameLimit = 120;
+void frameCap(double lastFrameTime);
 
 // ------------------------------------------------------------------------
 void commonParameters();
@@ -76,7 +81,6 @@ float timeMultiplier = 1.0f;
 
 bool reflections = false;
 float reflectionVisibility = 0.5f;
-int reflectionCount = 2;
 
 bool fogEnabled = true;
 float fogVisibility = 1.0f;
@@ -93,6 +97,7 @@ int selectedItem = 1;
 
 int currentScene = 0;
 int scene = 1;
+
 // ------------------------------------------------------------------------
 int numberOfEntities = 0;
 int node_clicked = -1;
