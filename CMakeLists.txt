@@ -6,6 +6,9 @@ include(CPack)
 
 find_package(OpenGL REQUIRED)
 
+set(CMAKE_PREFIX_PATH "${CMAKE_SOURCE_DIR}/Include/GLFW/GLFW")
+find_package(glfw3 CONFIG REQUIRED)
+
 set(source_files src/Source.cpp src/maingui.cpp src/Source.h src/glad.c src/Shader.h src/shadersetup.h src/cameraMovement.h src/input.h src/maingui.h src/sceneEditor.h)
 
 include_directories("Include/glm")
@@ -43,7 +46,12 @@ target_include_directories("imgui" PUBLIC ${imgui_path})
 include_directories("Include/GLFW")
 link_directories("Include/GLFW/lib-mingw-w64")
 
-add_executable(OpenGL_Rendering_Engine ${source_files})
+include_directories(${CMAKE_BINARY_DIR}/Resources/configuration)
+set(SOURCE_DIR "${CMAKE_SOURCE_DIR}")
+configure_file(Resources/configuration/source_directory.h.in Resources/configuration/source_directory.h)
+
+
+add_executable(OpenGL_Rendering_Engine WIN32 ${source_files})
 
 target_link_libraries(OpenGL_Rendering_Engine ${OPENGL_LIBRARIES} glfw3 glu32 opengl32 imgui)
 

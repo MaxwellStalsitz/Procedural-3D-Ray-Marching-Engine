@@ -1,0 +1,6 @@
+#ifndef SOURCEDIRECTORY_H
+#define SOURCEDIRECTORY_H
+
+#define SOURCE_DIR "@SOURCE_DIR@"
+
+#endif

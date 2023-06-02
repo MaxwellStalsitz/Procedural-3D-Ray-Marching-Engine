@@ -12,6 +12,7 @@
 #include "input.h"
 #include "maingui.h"
 #include "sceneEditor.h"
+#include "source_directory.h"
 
 //window variable
 GLFWwindow* window;
@@ -23,6 +24,13 @@ unsigned int VBO, VAO, EBO;
 
 double lastFrameTime;
 double limitFPS;
+
+char* concatenateStrings(const char* firstString, const char* secondString) {
+    std::string concatenatedString = std::string(firstString) + std::string(secondString);
+    char* result = new char[concatenatedString.length() + 1];
+    std::strcpy(result, concatenatedString.c_str());
+    return result;
+}
 
 int init(){
     //boilerplate code, initializing glfw and setting the correct versions (modern opengl/core profile)
@@ -63,9 +71,20 @@ int init(){
     glfwSetWindowIcon(window, 1, images);
     stbi_image_free(images[0].pixels);
 
+    const char* sourceDirectory = SOURCE_DIR;
+
     //shader setup
-    rayMarchingShader = new Shader("../src/shaders/rmvertex.glsl", "../src/shaders/rmfragment.glsl");
-    rayTracingShader = new Shader("../src/shaders/rtvertex.glsl", "../src/shaders/rtfragment.glsl");
+    char* vertexShaderPath = concatenateStrings(sourceDirectory, "/src/shaders/rmvertex.glsl");
+    char* fragmentShaderPath = concatenateStrings(sourceDirectory, "/src/shaders/rmfragment.glsl");
+    rayMarchingShader = new Shader(vertexShaderPath, fragmentShaderPath); 
+    delete[] vertexShaderPath;
+    delete[] fragmentShaderPath;
+
+    vertexShaderPath = concatenateStrings(sourceDirectory, "/src/shaders/rtvertex.glsl");
+    fragmentShaderPath = concatenateStrings(sourceDirectory, "/src/shaders/rtfragment.glsl");
+    rayTracingShader = new Shader(vertexShaderPath, fragmentShaderPath); 
+    delete[] vertexShaderPath;
+    delete[] fragmentShaderPath;
 
     //making sure loaded images are in the proper orientation (flipping them)
     stbi_set_flip_vertically_on_load(true);
