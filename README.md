@@ -44,6 +44,7 @@ cmake –build .
 ```
 ./OpenGL_Rendering_Engine
 ```
+(or just run the .exe file that was generated)
 ## **Images** 
 
 ||
