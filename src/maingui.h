@@ -19,10 +19,14 @@ void styleInitialization(){
     // imgui initialization and customizing the color scheme
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    font1 = io.Fonts->AddFontFromFileTTF("C:/Users/maxst/Downloads/Procedural-3D-Ray-Marching-Engine/Resources/fonts/mainfont.ttf", 24.0f, nullptr); // normal font
-    font2 = io.Fonts->AddFontFromFileTTF("C:/Users/maxst/Downloads/Procedural-3D-Ray-Marching-Engine/Resources/fonts/mainfont.ttf", 12.0f, nullptr); // smaller font
-    font3 = io.Fonts->AddFontFromFileTTF("C:/Users/maxst/Downloads/Procedural-3D-Ray-Marching-Engine/Resources/fonts/mainfont.ttf", 36.0f, nullptr); // larger font
-    font4 = io.Fonts->AddFontFromFileTTF("C:/Users/maxst/Downloads/Procedural-3D-Ray-Marching-Engine/Resources/fonts/mainfont.ttf", 6.0f, nullptr); // smallest font
+
+    const char* sourceDirectory = SOURCE_DIR;
+    char* fontPath = concatenateStrings(sourceDirectory, "/Resources/fonts/mainfont.ttf");
+
+    font1 = io.Fonts->AddFontFromFileTTF(fontPath, 24.0f, nullptr); // normal font
+    font2 = io.Fonts->AddFontFromFileTTF(fontPath, 12.0f, nullptr); // smaller font
+    font3 = io.Fonts->AddFontFromFileTTF(fontPath, 36.0f, nullptr); // larger font
+    font4 = io.Fonts->AddFontFromFileTTF(fontPath, 6.0f, nullptr); // smallest font
 
     // ------------------------------------------------------------------------
 

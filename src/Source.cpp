@@ -12,7 +12,6 @@
 #include "input.h"
 #include "maingui.h"
 #include "sceneEditor.h"
-#include "source_directory.h"
 
 //window variable
 GLFWwindow* window;
@@ -24,13 +23,6 @@ unsigned int VBO, VAO, EBO;
 
 double lastFrameTime;
 double limitFPS;
-
-char* concatenateStrings(const char* firstString, const char* secondString) {
-    std::string concatenatedString = std::string(firstString) + std::string(secondString);
-    char* result = new char[concatenatedString.length() + 1];
-    std::strcpy(result, concatenatedString.c_str());
-    return result;
-}
 
 int init(){
     //boilerplate code, initializing glfw and setting the correct versions (modern opengl/core profile)
@@ -381,6 +373,13 @@ void centerText(std::string text) {
 
     ImGui::SetCursorPosX((windowWidth - textWidth) * 0.5f);
     ImGui::Text(text.c_str());
+}
+
+char* concatenateStrings(const char* firstString, const char* secondString) {
+    std::string concatenatedString = std::string(firstString) + std::string(secondString);
+    char* result = new char[concatenatedString.length() + 1];
+    std::strcpy(result, concatenatedString.c_str());
+    return result;
 }
 
 void defaultsButton(){

@@ -27,6 +27,8 @@
 #include <glm/gtx/string_cast.hpp>
 #include <glm/ext.hpp>
 
+#include "source_directory.h"
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
@@ -35,6 +37,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void processInput(GLFWwindow* window);
 void centerText(std::string text);
+char* concatenateStrings(const char* firstString, const char* secondString);
 void defaultsButton();
 
 unsigned int texture;
@@ -56,6 +59,8 @@ int screenHeight = 1080;
 bool fpsCap = true;
 int frameLimit = 120;
 void frameCap(double lastFrameTime);
+
+
 
 // ------------------------------------------------------------------------
 void commonParameters();
